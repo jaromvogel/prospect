@@ -178,7 +178,8 @@ func readChunkData(_ chunk: chunkImage) {
         let dst_pointer = UnsafePointer(dst)
         
         let chunk_image:NSImage = imageFromPixels(size: chunk.tileSize!, pixels: dst_pointer, width: Int(chunk.tileSize!.width), height: Int(chunk.tileSize!.height))
-        chunk.image = chunk_image
+        
+        chunk.image = chunk_image.addTextToImage(drawText: "col: \(chunk.column!)\nrow: \(chunk.row!)")
     } else {
         debugPrint("error during LZO decompress! :(")
         return
@@ -326,9 +327,7 @@ extension NSImage {
 
         return rotatedImage
     }
-}
 
-extension NSImage {
     public func save(as fileName: String, fileType: NSBitmapImageRep.FileType = .jpeg, at directory: URL = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)) -> Bool {
         let savelocation = directory.appendingPathComponent(fileName).appendingPathExtension(fileType.pathExtension)
         guard let tiffRepresentation = tiffRepresentation, directory.isDirectory, !fileName.isEmpty else { return false }
@@ -342,6 +341,35 @@ extension NSImage {
             return false
         }
     }
+    
+    /// DEBUG -> Draw text over image
+    public func addTextToImage(drawText text: String) -> NSImage {
+
+        let targetImage = NSImage(size: self.size, flipped: false) { (dstRect: CGRect) -> Bool in
+
+            self.draw(in: dstRect)
+            let textColor = NSColor.red
+            let textFont = NSFont.boldSystemFont(ofSize: 30)
+            let paragraphStyle = NSMutableParagraphStyle()
+            paragraphStyle.alignment = NSTextAlignment.left
+
+            let textFontAttributes = [
+                NSAttributedString.Key.font: textFont,
+                NSAttributedString.Key.foregroundColor: textColor,
+                ] as [NSAttributedString.Key : Any]
+
+            let textOrigin = CGPoint(x: 0, y: 0)
+            let rect = CGRect(origin: textOrigin, size: self.size)
+            let ctx = NSGraphicsContext.current!.cgContext
+            ctx.scaleBy(x: -1.0, y: 1.0)
+            ctx.translateBy(x: -self.size.width, y: 0.0)
+            
+            text.draw(in: rect, withAttributes: textFontAttributes)
+            return true
+        }
+        return targetImage
+    }
+    // End Debug
 }
 
 extension URL {
