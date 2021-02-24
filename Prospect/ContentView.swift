@@ -120,9 +120,7 @@ struct ContentView: View {
 struct ProcreateView: View {
     @ObservedObject var silica_doc: SilicaDocument
     @State var image_view_size: CGSize
-    @State private var scale: CGFloat = 1.0
-    @State private var rotation: Double = 0
-    @State private var lastScale: CGFloat = 1.0
+    @State private var show_meta: Bool = false
     
     func debugReloadImage() {
         print("reloading")
@@ -137,6 +135,9 @@ struct ProcreateView: View {
             if (silica_doc.composite_image != nil) {
                 ProspectImageView(proImage: silica_doc.composite_image!, image_view_size: image_view_size)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .onTapGesture {
+                        self.show_meta.toggle()
+                    }
             } else {
                 ProgressBar(progress: $silica_doc.comp_load)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -145,33 +146,42 @@ struct ProcreateView: View {
             VStack() {
                 Spacer()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                VStack(alignment: .leading, spacing: 20) {
-                    InfoCell(label: "Title", value: silica_doc.name ?? "Untitled Artwork")
-                    InfoCell(label: "Layer Count", value: String((silica_doc.layers!.count)))
-                    InfoCell(label: "Author Name", value: silica_doc.authorName ?? "Unknown")
-                    InfoCell(label: "Size", value: "\(silica_doc.size!.width) x \(silica_doc.size!.height)")
-                    InfoCell(label: "DPI", value: String((silica_doc.SilicaDocumentArchiveDPIKey)!))
-                    Button(action: {
-                        
-                        exportController(si_doc: silica_doc).presentDialog(nil)
-                        
-                    }, label: {
-                        Text("Export Image")
-                    })
-                    Button(action: {
-                        
-                        debugReloadImage()
-                        
-                    }, label: {
-                        Text("DEBUG refresh image")
-                    })
+                GeometryReader() { geo in
+                    HStack(alignment: .top, spacing: 20) {
+                        VStack(alignment: .leading, spacing: 20) {
+                            InfoCell(label: "Title", value: silica_doc.name ?? "Untitled Artwork")
+                            InfoCell(label: "Layer Count", value: String((silica_doc.layers!.count)))
+                            InfoCell(label: "Author Name", value: silica_doc.authorName ?? "Unknown")
+                            InfoCell(label: "Size", value: "\(silica_doc.size!.width) x \(silica_doc.size!.height)")
+                            InfoCell(label: "DPI", value: String((silica_doc.SilicaDocumentArchiveDPIKey)!))
+                        }
+                        VStack(alignment: .leading, spacing: 20) {
+                            Button(action: {
+                                
+                                exportController(si_doc: silica_doc).presentDialog(nil)
+                                
+                            }, label: {
+                                Text("Export Image")
+                            })
+                            Button(action: {
+                                
+                                debugReloadImage()
+                                
+                            }, label: {
+                                Text("DEBUG refresh image")
+                            })
+                        }
+                    }
+                    .padding(20)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .background(VisualEffectBlur(material: .popover))
+                    .cornerRadius(15)
+                    .shadow(radius: 30)
+                    .animation(.spring(response: 0.2, dampingFraction: 0.75, blendDuration: 0.2))
+                    .offset(x: 0, y: show_meta ? 0 : geo.size.height + 100)
                 }
-                .padding(20)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-                .background(VisualEffectBlur(material: .popover))
-                .cornerRadius(20)
             }
-            .padding(20)
+            .padding(15)
         }
         .padding(0)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -180,17 +190,18 @@ struct ProcreateView: View {
 }
 
 struct InfoCell: View {
+    @Environment(\.colorScheme) var colorScheme
     var label:String
     var value:String
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(label)
-                .foregroundColor(.gray)
+                .foregroundColor(Color.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .font(.system(size: 11))
             Text(value)
-                .foregroundColor(.white)
+                .foregroundColor(colorScheme == .dark ? Color.white : Color.black)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .font(.system(size: 16))
         }
