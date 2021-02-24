@@ -34,6 +34,7 @@
 		7EBB0BA5255902DA0089D692 /* PreviewViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7EBB0BA3255902DA0089D692 /* PreviewViewController.xib */; };
 		7EBB0BAA255902DA0089D692 /* ProspectPreview.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 7EBB0B9E255902DA0089D692 /* ProspectPreview.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		7EBB0BD3255907C50089D692 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 7EBB0BD2255907C50089D692 /* ZIPFoundation */; };
+		8A21FD2A25E7085C008F148C /* VisualEffectBlur.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A21FD2925E7085C008F148C /* VisualEffectBlur.swift */; };
 		8AB14DFC25E06C41009D8027 /* ProcreateShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AB14DFB25E06C41009D8027 /* ProcreateShared.swift */; };
 /* End PBXBuildFile section */
 
@@ -146,6 +147,7 @@
 		7EBB0BA4255902DA0089D692 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/PreviewViewController.xib; sourceTree = "<group>"; };
 		7EBB0BA6255902DA0089D692 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7EBB0BA7255902DA0089D692 /* ProspectPreview.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ProspectPreview.entitlements; sourceTree = "<group>"; };
+		8A21FD2925E7085C008F148C /* VisualEffectBlur.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VisualEffectBlur.swift; sourceTree = "<group>"; };
 		8AB14DFB25E06C41009D8027 /* ProcreateShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcreateShared.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -217,6 +219,7 @@
 				7E3E756B2550D7D500AC0775 /* AppDelegate.swift */,
 				7E3E756D2550D7D500AC0775 /* Document.swift */,
 				7E3E756F2550D7D500AC0775 /* ContentView.swift */,
+				8A21FD2925E7085C008F148C /* VisualEffectBlur.swift */,
 				7E3E75712550D7D500AC0775 /* Assets.xcassets */,
 				7E3E75A72551DB4300AC0775 /* Prospect-Bridging-Header.h */,
 				7E3E75762550D7D500AC0775 /* Main.storyboard */,
@@ -476,6 +479,7 @@
 				7E3E756E2550D7D500AC0775 /* Document.swift in Sources */,
 				7E3E756C2550D7D500AC0775 /* AppDelegate.swift in Sources */,
 				7E3E75702550D7D500AC0775 /* ContentView.swift in Sources */,
+				8A21FD2A25E7085C008F148C /* VisualEffectBlur.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

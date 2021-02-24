@@ -38,6 +38,8 @@
 		<string>com.apple.quicklook.preview</string>
 		<key>NSExtensionPrincipalClass</key>
 		<string>$(PRODUCT_MODULE_NAME).PreviewViewController</string>
+		<key></key>
+		<string></string>
 	</dict>
 </dict>
 </plist>

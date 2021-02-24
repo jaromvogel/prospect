@@ -53,3 +53,33 @@ public func getBrushPreviewSize(thumb_image: NSImage, orientation: String) -> CG
     return brush_size
 }
 
+public func getImageSize(si_doc: SilicaDocument, height: Int = 800, minWidth: Int, maxWidth: Int) -> CGSize {
+    var width = height
+    var img_height = si_doc.size?.height
+    var img_width = si_doc.size?.width
+
+    var orientation:String
+    if (si_doc.orientation! == 3 || si_doc.orientation! == 4) {
+        orientation = "landscape"
+        img_height = si_doc.size?.width
+        img_width = si_doc.size?.height
+    } else {
+        orientation = "portrait"
+    }
+    
+    let ratio = img_width! / img_height!
+    
+    if (orientation == "landscape") {
+        width = Int(CGFloat(height) * ratio)
+    } else {
+        width = Int(CGFloat(width) * ratio)
+    }
+    
+    if (width > maxWidth) {
+        width = maxWidth
+    } else if (width < minWidth) {
+        width = minWidth
+    }
+    
+    return CGSize(width: width, height: height)
+}

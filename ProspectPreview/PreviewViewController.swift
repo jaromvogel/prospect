@@ -20,9 +20,15 @@ class PreviewViewController: NSViewController, QLPreviewingController {
 
     override func loadView() {
         super.loadView()
+//        super.preferredContentSize = (si_doc?.size)!
+//        super.preferredContentSize = view.intrinsicContentSize
         
         if let panel = QLPreviewPanel.shared() {
             panel.acceptsMouseMovedEvents = true
+            panel.setContentBorderThickness(0.0, for: .maxX)
+            panel.setContentBorderThickness(0.0, for: .maxY)
+            panel.setContentBorderThickness(0.0, for: .minX)
+            panel.setContentBorderThickness(0.0, for: .minY)
         }
         
         // Do any additional setup after loading the view.
@@ -40,32 +46,40 @@ class PreviewViewController: NSViewController, QLPreviewingController {
     }
      */
     
-    @IBOutlet weak var previewImageView: NSImageView!
-    @IBOutlet weak var previewImage: NSImageCell!
     @IBOutlet weak var previewScrollView: NSScrollView!
-    @IBOutlet weak var previewScrollChild: NSView!
     
     func preparePreviewOfFile(at url: URL, completionHandler handler: @escaping (Error?) -> Void) {
         
         // Perform any setup necessary in order to prepare the view.
         let ext = url.pathExtension
         
+        let documentView = NSView()
+        documentView.wantsLayer = true
+        self.previewScrollView.documentView = documentView
+        
         self.previewScrollView.allowsMagnification = true
         self.previewScrollView.autohidesScrollers = true
         self.previewScrollView.scrollerStyle = .overlay
-        self.previewScrollView.automaticallyAdjustsContentInsets = true
         self.previewScrollView.horizontalScrollElasticity = .none
         self.previewScrollView.verticalScrollElasticity = .none
         self.previewScrollView.minMagnification = 1.0
-        self.previewScrollChild.frame = self.previewScrollView.frame
+        self.previewScrollView.maxMagnification = 100.0
+        self.previewScrollView.usesPredominantAxisScrolling = false
+        self.previewScrollView.backgroundColor = .clear
+        self.view.layer?.backgroundColor = .clear
         
         if (ext == "brush") {
             let brush_thumb = getThumbImage(url: url)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                 // your code here
-                self.previewScrollChild.layer?.backgroundColor = .black
-                self.previewScrollChild.layer?.contentsGravity = .resizeAspect
-                self.previewScrollChild.layer?.contents = brush_thumb
+
+                let brush_prev_size = CGSize(width: 800, height: 400)
+                super.preferredContentSize = brush_prev_size
+                self.previewScrollView.documentView?.frame.size = brush_prev_size
+                self.previewScrollView.documentView?.layer?.backgroundColor = .black
+                self.previewScrollView.documentView?.layer?.contentsGravity = .resizeAspect
+                self.previewScrollView.documentView?.layer?.contents = brush_thumb
+            
                 handler(nil)
             }
         } else if (ext == "procreate") {
@@ -74,13 +88,14 @@ class PreviewViewController: NSViewController, QLPreviewingController {
             si_doc = metadata
 
             si_doc?.getComposite(url, {
-    //            super.preferredContentSize = si_doc?.composite_image?.size ?? CGSize(width: 100, height: 100)
-    //            self.view.layer = CALayer()
-    //            self.view.layer?.contentsGravity = .resizeAspect
-    //            self.view.layer?.contents = si_doc?.composite_image
-    //            self.view.wantsLayer = true
-                self.previewScrollChild.layer?.contentsGravity = .resizeAspect
-                self.previewScrollChild.layer?.contents = si_doc?.composite_image
+                // Calculate size here, then set super.preferredContentSize, and maybe view.size? panel.contentView.size?
+                let preview_size = getImageSize(si_doc: si_doc!, height: 700, minWidth: 300, maxWidth: 1000)
+                let preview_size_w_title = CGSize(width: preview_size.width, height: preview_size.height)
+                super.preferredContentSize = preview_size_w_title
+                self.previewScrollView.documentView?.layer?.backgroundColor = .clear
+                self.previewScrollView.documentView?.frame.size = preview_size
+                self.previewScrollView.documentView?.layer?.contentsGravity = .resizeAspect
+                self.previewScrollView.documentView?.layer?.contents = si_doc?.composite_image
                 
                 // Call the completion handler so Quick Look knows that the preview is fully loaded.
                 // Quick Look will display a loading spinner while the completion handler is not called.
@@ -95,10 +110,10 @@ class PreviewViewController: NSViewController, QLPreviewingController {
     override func magnify(with event: NSEvent) {
         if(event.phase == .changed){
             zoom += event.deltaZ
-            self.previewScrollView.setMagnification(zoom / 200, centeredAt: self.view.convert(event.locationInWindow, to: self.previewScrollChild))
+            self.previewScrollView.setMagnification(zoom / 200, centeredAt: self.view.convert(event.locationInWindow, to: self.previewScrollView.documentView))
         }
     }
-    
+
     var commandPressed:Bool = false
 
     override func keyDown(with event: NSEvent) {
@@ -108,10 +123,10 @@ class PreviewViewController: NSViewController, QLPreviewingController {
         if (event.keyCode == 55) {
             commandPressed = true
         }
-        
+
         super.keyDown(with: event)
     }
-    
+
     override func keyUp(with event: NSEvent) {
         if (event.keyCode == 55) {
             commandPressed = false

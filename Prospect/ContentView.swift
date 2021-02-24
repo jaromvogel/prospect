@@ -102,13 +102,16 @@ class exportController {
 
 struct ContentView: View {
     var si_doc: SilicaDocument?
+    var image_view_size: CGSize?
+    var url: URL?
+    
     var body: some View {
         HStack() {
             if (file_ext == "procreate") {
-                ProcreateView(silica_doc: si_doc!)
+                ProcreateView(silica_doc: si_doc!, image_view_size: image_view_size!)
             }
             if (file_ext == "brush") {
-                BrushView()
+                BrushView(url: url, preview_size: image_view_size)
             }
         }
     }
@@ -116,59 +119,37 @@ struct ContentView: View {
 
 struct ProcreateView: View {
     @ObservedObject var silica_doc: SilicaDocument
-    @State private var scale:CGFloat = 1.0
-    @State private var rotation:Double = 0
-    @State private var lastScale:CGFloat = 1.0
+    @State var image_view_size: CGSize
+    @State private var scale: CGFloat = 1.0
+    @State private var rotation: Double = 0
+    @State private var lastScale: CGFloat = 1.0
+    
+    func debugReloadImage() {
+        print("reloading")
+        silica_doc.composite_image = silica_doc.composite_image
+        silica_doc.objectWillChange.send()
+        silica_doc.composite_image?.objectWillChange.send()
+    }
     
     var body: some View {
-        
-        let magnificationGesture = MagnificationGesture()
-            .onChanged { value in
-                self.scale = value.magnitude
-            }
-            .onEnded { value in
-                self.scale = 1.0
-            }
-        
-        let rotationGesture = RotationGesture()
-            .onChanged { value in
-                self.rotation = value.degrees
-            }
-            .onEnded { value in
-                self.rotation = 0
-            }
-        
-        let magnificationAndRotationGesture = magnificationGesture.simultaneously(with: rotationGesture)
-        
-        HStack(alignment: .bottom, spacing: 0) {
+
+        ZStack() {
             if (silica_doc.composite_image != nil) {
-                Image(nsImage: silica_doc.composite_image!)
-                    .resizable()
-                    .aspectRatio(contentMode: ContentMode.fit)
+                ProspectImageView(proImage: silica_doc.composite_image!, image_view_size: image_view_size)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .gesture(magnificationAndRotationGesture)
-                    .scaleEffect(self.scale)
-                    .animation(.easeOut)
-                    .rotationEffect(Angle(degrees: self.rotation))
-//                    .rotationEffect(.degrees(silica_doc.getRotation())) // Rotate based on orientation
-                    // Flip based on flippedHorizontally / flippedVertically
-//                    .scaleEffect(
-//                        x: (si_doc?.flippedHorizontally!)! ? -1.0 : 1.0,
-//                        y: (si_doc?.flippedVertically!)! ? -1.0 : 1.0,
-//                        anchor: .center
-//                    )
             } else {
                 ProgressBar(progress: $silica_doc.comp_load)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .foregroundColor(.white)
-//                Text("Loading... \(silica_doc.comp_load)")
             }
-            ZStack() {
+            VStack() {
+                Spacer()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 VStack(alignment: .leading, spacing: 20) {
                     InfoCell(label: "Title", value: silica_doc.name ?? "Untitled Artwork")
                     InfoCell(label: "Layer Count", value: String((silica_doc.layers!.count)))
                     InfoCell(label: "Author Name", value: silica_doc.authorName ?? "Unknown")
-                    InfoCell(label: "Size", value: String(Int((silica_doc.size?.width)!)).appending(" x ").appending(String(Int((silica_doc.size?.height)!))))
+                    InfoCell(label: "Size", value: "\(silica_doc.size!.width) x \(silica_doc.size!.height)")
                     InfoCell(label: "DPI", value: String((silica_doc.SilicaDocumentArchiveDPIKey)!))
                     Button(action: {
                         
@@ -177,11 +158,20 @@ struct ProcreateView: View {
                     }, label: {
                         Text("Export Image")
                     })
+                    Button(action: {
+                        
+                        debugReloadImage()
+                        
+                    }, label: {
+                        Text("DEBUG refresh image")
+                    })
                 }
                 .padding(20)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                .background(VisualEffectBlur(material: .popover))
+                .cornerRadius(20)
             }
-                .frame(maxWidth: 300, maxHeight: .infinity, alignment: .topLeading)
-                .background(Color(NSColor.init(red: 0.12, green: 0.12, blue: 0.15, alpha: 1.0)))
+            .padding(20)
         }
         .padding(0)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -237,11 +227,50 @@ struct ProgressBar: View {
 }
 
 struct BrushView: View {
+    var url: URL?
+    var preview_size: CGSize?
+    
     var body: some View {
         HStack() {
-            Rectangle().frame(width: 300, height: 300)
-                .foregroundColor(Color.red)
+            ProspectImageView(proImage: getThumbImage(url: url!), image_view_size: preview_size!)
+//            Rectangle().frame(width: 300, height: 300)
+//                .foregroundColor(Color.red)
         }
+    }
+}
+
+struct ProspectImageView: NSViewRepresentable {
+    @State var proImage: NSImage
+    @State var image_view_size: CGSize
+    
+    func makeNSView(context: Context) -> NSScrollView {
+        let subviewFrame = CGRect(origin: .zero,
+                                  size: CGSize(width: image_view_size.width, height: image_view_size.height))
+
+        let documentView = NSView(frame: subviewFrame)
+        documentView.wantsLayer = true
+
+        let scrollView = NSScrollView()
+        scrollView.documentView = documentView
+        scrollView.contentView.scroll(to: CGPoint(x: 0, y: subviewFrame.size.height))
+        
+        scrollView.allowsMagnification = true
+        scrollView.autohidesScrollers = true
+        scrollView.scrollerStyle = .overlay
+        scrollView.backgroundColor = .black
+        scrollView.horizontalScrollElasticity = .none
+        scrollView.verticalScrollElasticity = .none
+        scrollView.scrollsDynamically = true
+        scrollView.minMagnification = 1.0
+        scrollView.maxMagnification = 100.0
+        scrollView.usesPredominantAxisScrolling = false //allows view to scroll diagonally when false
+
+        return scrollView
+    }
+
+    func updateNSView(_ nsView: NSScrollView, context: Context) {
+        nsView.documentView?.layer?.contents = proImage
+        nsView.documentView?.layer?.contentsGravity = .resizeAspect
     }
 }
 

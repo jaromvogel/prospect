@@ -16,7 +16,7 @@ public var pro_url:URL?
 
 class Document: NSDocument {
     
-    var si_doc:SilicaDocument?
+    weak var si_doc:SilicaDocument?
     
     override init() {
         super.init()
@@ -31,17 +31,31 @@ class Document: NSDocument {
         return false
     }
     
+    override func close() {
+        assert(Thread.isMainThread)
+        super.close()
+        self.si_doc?.composite_image = nil
+        self.si_doc?.composite = nil
+        self.si_doc = nil
+    }
+    
     override func makeWindowControllers() {
-        // Create the SwiftUI view that provides the window contents.
-        let contentView = ContentView(si_doc: si_doc)
-
-        // Create the window and set the content view.
+        var contentView:ContentView?
         var image_size = CGSize(width: 800, height: 800)
+        
         if (file_ext == "procreate") {
-            image_size = getImageSize()
+            // Calculate the window size based on image aspect ratio.
+            image_size = getImageSize(si_doc: si_doc!, minWidth: 300, maxWidth: 1000)
+            
+            // Create the SwiftUI view that provides the window contents.
+            contentView = ContentView(si_doc: si_doc, image_view_size: image_size) // remove metadata space
+
+        } else if (file_ext == "brush") {
+            image_size = CGSize(width: 600, height: 300)
+            contentView = ContentView(image_view_size: image_size, url: pro_url)
         }
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: image_size.width + 300, height: image_size.height),
+            contentRect: NSRect(origin: .zero, size: image_size),
             styleMask: [.titled, .borderless, .closable, .miniaturizable, .resizable],
             backing: .buffered, defer: false)
         window.isReleasedWhenClosed = true
@@ -50,42 +64,6 @@ class Document: NSDocument {
         let windowController = NSWindowController(window: window)
         self.addWindowController(windowController)
     }
-    
-    func getImageSize() -> CGSize {
-        var width = 800
-        let height = 800
-        let maxWidth = 1000
-        let minWidth = 300
-        var img_height = si_doc?.size?.height
-        var img_width = si_doc?.size?.width
-
-        var orientation:String
-        if (si_doc?.orientation! == 3 || si_doc?.orientation! == 4) {
-            orientation = "landscape"
-            img_height = si_doc?.size?.width
-            img_width = si_doc?.size?.height
-        } else {
-            orientation = "portrait"
-        }
-        
-        let ratio = img_width! / img_height!
-        
-        if (orientation == "landscape") {
-            width = Int(CGFloat(height) * ratio)
-        } else {
-            width = Int(CGFloat(width) * ratio)
-        }
-        
-        if (width > maxWidth) {
-            width = maxWidth
-        } else if (width < minWidth) {
-            width = minWidth
-        }
-        
-        return CGSize(width: width, height: height)
-    }
-
-    
     
     override func data(ofType typeName: String) throws -> Data {
         // Insert code here to write your document to data of the specified type, throwing an error in case of failure.
@@ -105,12 +83,17 @@ class Document: NSDocument {
         file_ext = url.pathExtension
         if (file_ext == "brush") {
             si_doc = nil
+            pro_url = url
         } else if (file_ext == "procreate") {
             pro_url = url
-            let metadata: SilicaDocument? = getArchive(pro_url!)
-            si_doc = metadata
+            si_doc = getArchive(pro_url!)
             
-            si_doc?.getComposite(url)
+//            si_doc?.getComposite(url)
+            si_doc?.getComposite(url, {
+                // Do something after composite loads
+                self.si_doc?.objectWillChange.send()
+                self.si_doc?.composite_image?.objectWillChange.send()
+            })
         }
 
         // Throw this if you can't open the document for whatever reason

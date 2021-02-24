@@ -133,7 +133,7 @@ func decompressChunk(_ url: URL, chunk: chunkImage) {
 
     do {
         chunk.data = Data()
-        try _ = archive.extract(entry, bufferSize: UInt32(100000000), consumer: { (data) in
+        try _ = archive.extract(entry, bufferSize: UInt32(100000), consumer: { (data) in
             chunk.data?.append(data)
         })
         readChunkData(chunk)
@@ -272,7 +272,7 @@ class chunkImage {
 
 // Get the raw Document.archive data from a Procreate Document
 public func getArchive(_ url: URL) -> SilicaDocument? {
-    var archive_data:SilicaDocument?
+    weak var archive_data:SilicaDocument?
     let pro_file:URL = url
     guard let archive = Archive(url: pro_file, accessMode: .read) else {
         return nil
@@ -282,7 +282,7 @@ public func getArchive(_ url: URL) -> SilicaDocument? {
     }
     
     do {
-        try _ = archive.extract(entry, bufferSize: UInt32(100000000), skipCRC32: true, progress: nil, consumer: { (data) in
+        try _ = archive.extract(entry, bufferSize: UInt32(100000), skipCRC32: true, progress: nil, consumer: { (data) in
             archive_data = readProcreateData(data: data)!
         })
     } catch {

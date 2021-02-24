@@ -6,7 +6,7 @@ import CoreGraphics
 @objc(SilicaDocument)
 public class SilicaDocument: NSObject, NSCoding, ObservableObject {
     @Published public var composite_image:NSImage?
-    @Published public var comp_load:CGFloat = 0.0
+    public var comp_load:CGFloat = 0.0
     
     public var animation:ValkyrieDocumentAnimation?
     public var authorName:String?
