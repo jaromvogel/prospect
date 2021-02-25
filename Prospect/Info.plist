@@ -15,7 +15,7 @@
 			<key>CFBundleTypeIconFile</key>
 			<string></string>
 			<key>CFBundleTypeName</key>
-			<string>DocumentType</string>
+			<string></string>
 			<key>CFBundleTypeOSTypes</key>
 			<array>
 				<string>????</string>
@@ -24,8 +24,23 @@
 			<string>Viewer</string>
 			<key>LSHandlerRank</key>
 			<string>Default</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>dyn.ah62d4rv4ge81a6xtqr3gn2pyqy</string>
+			</array>
 			<key>NSDocumentClass</key>
-			<string>$(PRODUCT_MODULE_NAME).Document</string>
+			<string></string>
+		</dict>
+		<dict>
+			<key>CFBundleTypeExtensions</key>
+			<array>
+				<string>procreate</string>
+				<string>brush</string>
+			</array>
+			<key>CFBundleTypeRole</key>
+			<string>Viewer</string>
+			<key>LSHandlerRank</key>
+			<string>Default</string>
 		</dict>
 	</array>
 	<key>CFBundleExecutable</key>
@@ -48,7 +63,5 @@
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
 	<key>NSMainStoryboardFile</key>
 	<string>Main</string>
-	<key>NSPrincipalClass</key>
-	<string>NSApplication</string>
 </dict>
 </plist>

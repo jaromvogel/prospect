@@ -84,10 +84,16 @@ class PreviewViewController: NSViewController, QLPreviewingController {
             }
         } else if (ext == "procreate") {
             pro_url = url
-            let metadata: SilicaDocument? = getArchive(pro_url!)
+            var pro_file:FileWrapper?
+            do {
+                try pro_file = FileWrapper(url: pro_url!, options: .immediate)
+            } catch {
+                // couldn't create FileWrapper
+            }
+            let metadata: SilicaDocument? = getArchive(pro_file!)
             si_doc = metadata
 
-            si_doc?.getComposite(url, {
+            si_doc?.getComposite(pro_file!, {
                 // Calculate size here, then set super.preferredContentSize, and maybe view.size? panel.contentView.size?
                 let preview_size = getImageSize(si_doc: si_doc!, height: 700, minWidth: 300, maxWidth: 1000)
                 let preview_size_w_title = CGSize(width: preview_size.width, height: preview_size.height)

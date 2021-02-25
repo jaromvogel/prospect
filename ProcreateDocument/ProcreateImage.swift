@@ -11,7 +11,7 @@ import ZIPFoundation
 
 public extension SilicaDocument {
     
-    func getComposite(_ url: URL, _ callback: @escaping () -> Void = {}) {
+    func getComposite(_ file: FileWrapper, _ callback: @escaping () -> Void = {}) {
         
         let size:CGSize = (self.size)!
         let tileSize:Int = (self.tileSize)!
@@ -30,11 +30,11 @@ public extension SilicaDocument {
             differenceY = (rows * tileSize) - Int(size.height)
         }
         
-        let image_chunks:Array<chunkImage> = getLayerData((self.composite)!, columns, rows, differenceX, differenceY, url)
+        let image_chunks:Array<chunkImage> = getLayerData((self.composite)!, columns, rows, differenceX, differenceY, file)
 
         var buffer_img:NSImage?
         DispatchQueue.global(qos: .userInitiated).async {
-            buffer_img = decompressAndCompositeImages(url, self, image_chunks)
+            buffer_img = decompressAndCompositeImages(file, self, image_chunks)
             DispatchQueue.main.async {
                 self.composite_image = buffer_img
                 callback()
@@ -94,7 +94,7 @@ extension NSImage: ObservableObject {
 
 // Read the raw data from a chunk file
 // (This isn't done—currently hardcoded to read a single chunk of layer)
-func getLayerData(_ layer: SilicaLayer, _ columns: Int, _ rows: Int, _ differenceX: Int, _ differenceY: Int, _ url: URL) -> [chunkImage] {
+func getLayerData(_ layer: SilicaLayer, _ columns: Int, _ rows: Int, _ differenceX: Int, _ differenceY: Int, _ file: FileWrapper) -> [chunkImage] {
     var layer_chunks:Array<chunkImage> = []
     
     for column in 0..<columns {
@@ -122,9 +122,9 @@ func getLayerData(_ layer: SilicaLayer, _ columns: Int, _ rows: Int, _ differenc
     return layer_chunks
 }
 
-func decompressChunk(_ url: URL, chunk: chunkImage) {
+func decompressChunk(_ file: FileWrapper, chunk: chunkImage) {
     
-    guard let archive = Archive(url: url, accessMode: .read) else {
+    guard let archive = Archive(data: file.regularFileContents!, accessMode: .read) else {
         return
     }
     guard let entry = archive[chunk.filepath!] else {
@@ -216,7 +216,7 @@ func imageFromPixels(size: NSSize, pixels: UnsafePointer<UInt8>, width: Int, hei
 
 
 // Composite image chunks into full layer image
-func decompressAndCompositeImages(_ url: URL, _ metadata: SilicaDocument, _ chunks: Array<chunkImage>) -> NSImage? {
+func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocument, _ chunks: Array<chunkImage>) -> NSImage? {
  
     var counter:CGFloat = 0
     
@@ -224,7 +224,7 @@ func decompressAndCompositeImages(_ url: URL, _ metadata: SilicaDocument, _ chun
  
         DispatchQueue.global(qos: .userInitiated).sync {
             DispatchQueue.concurrentPerform(iterations: chunks.count, execute: { index in
-                decompressChunk(url, chunk: chunks[index])
+                decompressChunk(file, chunk: chunks[index])
                 
                 let y_pos = CGFloat(metadata.tileSize! * (chunks[index].row!))
 
@@ -271,10 +271,10 @@ class chunkImage {
 
 
 // Get the raw Document.archive data from a Procreate Document
-public func getArchive(_ url: URL) -> SilicaDocument? {
+public func getArchive(_ file: FileWrapper) -> SilicaDocument? {
     weak var archive_data:SilicaDocument?
-    let pro_file:URL = url
-    guard let archive = Archive(url: pro_file, accessMode: .read) else {
+    let pro_data:Data = file.regularFileContents!
+    guard let archive = Archive(data: pro_data, accessMode: .read, preferredEncoding: nil) else {
         return nil
     }
     guard let entry = archive["Document.archive"] else {

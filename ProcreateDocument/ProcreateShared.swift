@@ -10,6 +10,13 @@ import Cocoa
 import QuickLookThumbnailing
 import ZIPFoundation
 
+public func readProcreateDocument(file: FileWrapper) -> SilicaDocument {
+    let silica_doc = getArchive(file)
+
+    silica_doc?.getComposite(file)
+    return silica_doc!
+}
+
 
 public func getThumbImage(url: URL) -> NSImage {
     let archive = Archive(url: url, accessMode: .read)

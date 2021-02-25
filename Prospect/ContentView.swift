@@ -9,6 +9,7 @@ import SwiftUI
 import Combine
 import Foundation
 import ProcreateDocument
+import UniformTypeIdentifiers
 
 class exportController {
     var si_doc: SilicaDocument?
@@ -101,15 +102,53 @@ class exportController {
 }
 
 
-struct ContentView: View {
-    var si_doc: SilicaDocument?
-    var image_view_size: CGSize?
-    var url: URL?
+
+extension UTType {
+    static var procreateFiles: UTType {
+//        UTType(importedAs: "dyn.ah62d4rv4ge81a6xtqr3gn2pyqy")
+        UTType(filenameExtension: "procreate")!
+    }
+}
+
+struct ProcreateDocumentType: FileDocument {
+
+    static var readableContentTypes: [UTType] { [.procreateFiles] }
+    var procreate_doc: SilicaDocument?
+    var file_ext: String?
+    var image_size: CGSize?
+
+    init(configuration: ReadConfiguration) throws {
+        // Read the file's contents from file.regularFileContents
+        print("trying to read this thing")
+        let filename = configuration.file.filename!
+        file_ext = URL(fileURLWithPath: filename).pathExtension
+        if (file_ext == "procreate") {
+            procreate_doc = readProcreateDocument(file: configuration.file)
+            image_size = getImageSize(si_doc: procreate_doc!, minWidth: 300, maxWidth: 1000)
+        }
+    }
+    
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        // Create a FileWrapper with the updated contents and set configuration.fileWrapper to it.
+        // This is possible because fileWrapper is an inout parameter.
+        return configuration.existingFile!
+    }
+}
+
+
+@main
+struct ContentApp: App {
+    var body: some Scene {
+        DocumentScene()
+    }
+}
+
+struct DocumentScene: Scene {
     @State var viewMode: Int = 1
     
-    var body: some View {
-        if (file_ext == "procreate") {
-            ProcreateView(silica_doc: si_doc!, image_view_size: image_view_size!)
+    var body: some Scene {
+        DocumentGroup(viewing: ProcreateDocumentType.self) { file in
+            ContentView(file: file.$document)
                 .toolbar {
                     ToolbarItemGroup(content: {
                             Picker("View", selection: $viewMode) {
@@ -121,8 +160,21 @@ struct ContentView: View {
                 }
                 .presentedWindowToolbarStyle(ExpandedWindowToolbarStyle())
         }
-        if (file_ext == "brush") {
-            BrushView(url: url, preview_size: image_view_size)
+    }
+}
+
+struct ContentView: View {
+    @Binding var file: ProcreateDocumentType
+    var url: URL?
+    
+    var body: some View {
+        if (file.file_ext == "procreate") {
+            ProcreateView(silica_doc: file.procreate_doc!, image_view_size: file.image_size!)
+                .frame(width: file.image_size!.width, height: file.image_size!.height, alignment: .center)
+        }
+        if (file.file_ext == "brush") {
+            BrushView(url: url, preview_size: file.image_size!)
+                .frame(width: file.image_size!.width, height: file.image_size!.height, alignment: .center)
         }
     }
     
@@ -297,11 +349,5 @@ struct ProspectImageView: NSViewRepresentable {
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         nsView.documentView?.layer?.contents = proImage
         nsView.documentView?.layer?.contentsGravity = .resizeAspect
-    }
-}
-
-struct ContentView_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView()
     }
 }
