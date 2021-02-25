@@ -18,8 +18,8 @@ public func readProcreateDocument(file: FileWrapper) -> SilicaDocument {
 }
 
 
-public func getThumbImage(url: URL) -> NSImage {
-    let archive = Archive(url: url, accessMode: .read)
+public func getThumbImage(file: FileWrapper) -> NSImage {
+    let archive = Archive(data: file.regularFileContents!, accessMode: .read, preferredEncoding: nil)
         
     let entry = archive!["QuickLook/Thumbnail.png"]
 

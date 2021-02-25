@@ -108,23 +108,29 @@ extension UTType {
 //        UTType(importedAs: "dyn.ah62d4rv4ge81a6xtqr3gn2pyqy")
         UTType(filenameExtension: "procreate")!
     }
+    static var brushFiles: UTType {
+        UTType(filenameExtension: "brush")!
+    }
 }
 
 struct ProcreateDocumentType: FileDocument {
 
-    static var readableContentTypes: [UTType] { [.procreateFiles] }
-    var procreate_doc: SilicaDocument?
+    static var readableContentTypes: [UTType] { [.procreateFiles, .brushFiles] }
+    weak var procreate_doc: SilicaDocument?
     var file_ext: String?
     var image_size: CGSize?
+    var brush_thumb: NSImage?
 
     init(configuration: ReadConfiguration) throws {
         // Read the file's contents from file.regularFileContents
-        print("trying to read this thing")
         let filename = configuration.file.filename!
         file_ext = URL(fileURLWithPath: filename).pathExtension
         if (file_ext == "procreate") {
             procreate_doc = readProcreateDocument(file: configuration.file)
-            image_size = getImageSize(si_doc: procreate_doc!, minWidth: 300, maxWidth: 1000)
+            image_size = getImageSize(si_doc: procreate_doc!, minWidth: 300, maxWidth: 1200)
+        } else if (file_ext == "brush") {
+            image_size = CGSize(width: 600, height: 300)
+            brush_thumb = getThumbImage(file: configuration.file)
         }
     }
     
@@ -144,11 +150,37 @@ struct ContentApp: App {
 }
 
 struct DocumentScene: Scene {
-    @State var viewMode: Int = 1
-    
     var body: some Scene {
         DocumentGroup(viewing: ProcreateDocumentType.self) { file in
             ContentView(file: file.$document)
+            .onDisappear() {
+                // Clean up memory
+                if (file.document.file_ext == "procreate") {
+                    file.document.procreate_doc!.cleanUp()
+                } else if (file.document.file_ext == "brush") {
+                    file.document.brush_thumb = nil
+                }
+            }
+        }
+        .windowToolbarStyle(ExpandedWindowToolbarStyle())
+    }
+}
+
+struct ContentView: View {
+    @Binding var file: ProcreateDocumentType
+    var url: URL?
+    @State var viewMode: Int = 1
+
+//    print("init running")
+//    NSApplication.shared.keyWindow?.isReleasedWhenClosed = true
+//    print(NSApplication.shared.keyWindow)
+    
+    var body: some View {
+//        Rectangle().foregroundColor(.red)
+//            .frame(width: 300, height: 300, alignment: .center)
+        if (file.file_ext == "procreate") {
+            ProcreateView(silica_doc: file.procreate_doc!, image_view_size: file.image_size!)
+                .frame(width: file.image_size!.width, height: file.image_size!.height, alignment: .center)
                 .toolbar {
                     ToolbarItemGroup(content: {
                             Picker("View", selection: $viewMode) {
@@ -158,22 +190,9 @@ struct DocumentScene: Scene {
                             .pickerStyle(SegmentedPickerStyle())
                     })
                 }
-                .presentedWindowToolbarStyle(ExpandedWindowToolbarStyle())
-        }
-    }
-}
-
-struct ContentView: View {
-    @Binding var file: ProcreateDocumentType
-    var url: URL?
-    
-    var body: some View {
-        if (file.file_ext == "procreate") {
-            ProcreateView(silica_doc: file.procreate_doc!, image_view_size: file.image_size!)
-                .frame(width: file.image_size!.width, height: file.image_size!.height, alignment: .center)
         }
         if (file.file_ext == "brush") {
-            BrushView(url: url, preview_size: file.image_size!)
+            BrushView(thumb_image: file.brush_thumb, preview_size: file.image_size!)
                 .frame(width: file.image_size!.width, height: file.image_size!.height, alignment: .center)
         }
     }
@@ -191,6 +210,7 @@ struct ProcreateView: View {
     
     func debugReloadImage() {
         print("reloading")
+        NSApplication.shared.keyWindow?.close()
         silica_doc.composite_image = silica_doc.composite_image
         silica_doc.objectWillChange.send()
         silica_doc.composite_image?.objectWillChange.send()
@@ -305,14 +325,12 @@ struct ProgressBar: View {
 }
 
 struct BrushView: View {
-    var url: URL?
+    var thumb_image: NSImage?
     var preview_size: CGSize?
     
     var body: some View {
         HStack() {
-            ProspectImageView(proImage: getThumbImage(url: url!), image_view_size: preview_size!)
-//            Rectangle().frame(width: 300, height: 300)
-//                .foregroundColor(Color.red)
+            ProspectImageView(proImage: thumb_image!, image_view_size: preview_size!)
         }
     }
 }

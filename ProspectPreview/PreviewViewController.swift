@@ -68,8 +68,16 @@ class PreviewViewController: NSViewController, QLPreviewingController {
         self.previewScrollView.backgroundColor = .clear
         self.view.layer?.backgroundColor = .clear
         
+        pro_url = url
+        var pro_file:FileWrapper?
+        do {
+            try pro_file = FileWrapper(url: pro_url!, options: .immediate)
+        } catch {
+            // couldn't create FileWrapper
+        }
+        
         if (ext == "brush") {
-            let brush_thumb = getThumbImage(url: url)
+            let brush_thumb = getThumbImage(file: pro_file!)
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
                 // your code here
 
@@ -83,13 +91,6 @@ class PreviewViewController: NSViewController, QLPreviewingController {
                 handler(nil)
             }
         } else if (ext == "procreate") {
-            pro_url = url
-            var pro_file:FileWrapper?
-            do {
-                try pro_file = FileWrapper(url: pro_url!, options: .immediate)
-            } catch {
-                // couldn't create FileWrapper
-            }
             let metadata: SilicaDocument? = getArchive(pro_file!)
             si_doc = metadata
 

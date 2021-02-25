@@ -77,6 +77,43 @@ public class SilicaDocument: NSObject, NSCoding, ObservableObject {
         strokeCount = coder.decodeObject(forKey: "strokeCount") as! Int?
         tileSize = coder.decodeInteger(forKey: "tileSize")
     }
+    
+    deinit {
+        self.cleanUp()
+    }
+    
+    public func cleanUp() {
+        self.composite_image = nil
+        self.animation = nil
+        self.authorName = nil
+        self.backgroundColor = nil
+        self.backgroundHidden = nil
+        self.backgroundColorHSBA = nil
+        self.closedCleanlyKey = nil
+        self.colorProfile = nil
+        self.composite = nil
+        self.faceBackgroundHidden = nil
+        self.flippedHorizontally = nil
+        self.flippedVertically = nil
+        self.isFirstItemAnimationForeground = nil
+        self.isLastItemAnimationBackground = nil
+        self.layers = nil
+        self.mask = nil
+        self.name = nil
+        self.orientation = nil
+        self.primaryItem = nil
+        self.selectedLayer = nil
+        self.selectedSamplerLayer = nil
+        self.SilicaDocumentArchiveDPIKey = nil
+        self.SilicaDocumentArchiveUnitKey = nil
+        self.SilicaDocumentTrackedTimeKey = nil
+        self.SilicaDocumentVideoPurgedKey = nil
+        self.SilicaDocumentVideoSegmentInfoKey = nil
+        self.size = nil
+        self.solo = nil
+        self.strokeCount = nil
+        self.tileSize = nil
+    }
 }
 
 
