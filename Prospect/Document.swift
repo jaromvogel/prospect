@@ -56,10 +56,18 @@ class Document: NSDocument {
         }
         let window = NSWindow(
             contentRect: NSRect(origin: .zero, size: image_size),
-            styleMask: [.titled, .borderless, .closable, .miniaturizable, .resizable],
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered, defer: false)
         window.isReleasedWhenClosed = true
         window.center()
+        window.toolbar = NSToolbar()
+        window.toolbarStyle = .unifiedCompact
+        let item1id = NSToolbarItem.Identifier.init("item1")
+        let toolbarItem1 = NSToolbarItem(itemIdentifier: item1id)
+        toolbarItem1.label = "hello"
+        toolbarItem1.image = NSImage(systemSymbolName: "book.circle", accessibilityDescription: "hey")
+        window.toolbar?.insertItem(withItemIdentifier: item1id, at: 0)
+        
         window.contentView = NSHostingView(rootView: contentView)
         let windowController = NSWindowController(window: window)
         self.addWindowController(windowController)

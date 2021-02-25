@@ -100,21 +100,36 @@ class exportController {
     }
 }
 
+
 struct ContentView: View {
     var si_doc: SilicaDocument?
     var image_view_size: CGSize?
     var url: URL?
+    @State var viewMode: Int = 1
     
     var body: some View {
-        HStack() {
-            if (file_ext == "procreate") {
-                ProcreateView(silica_doc: si_doc!, image_view_size: image_view_size!)
-            }
-            if (file_ext == "brush") {
-                BrushView(url: url, preview_size: image_view_size)
-            }
+        if (file_ext == "procreate") {
+            ProcreateView(silica_doc: si_doc!, image_view_size: image_view_size!)
+                .toolbar {
+                    ToolbarItemGroup(content: {
+                            Picker("View", selection: $viewMode) {
+                                Text("Artwork").tag(1)
+                                Text("Timelapse").tag(2)
+                            }
+                            .pickerStyle(SegmentedPickerStyle())
+                    })
+                }
+                .presentedWindowToolbarStyle(ExpandedWindowToolbarStyle())
+        }
+        if (file_ext == "brush") {
+            BrushView(url: url, preview_size: image_view_size)
         }
     }
+    
+    private func toolbarAction() {
+        print("hello")
+    }
+    
 }
 
 struct ProcreateView: View {
