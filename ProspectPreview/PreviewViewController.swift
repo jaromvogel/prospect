@@ -12,26 +12,32 @@ import ProcreateDocument
 public var si_doc:SilicaDocument?
 public var pro_url:URL?
 
-class PreviewViewController: NSViewController, QLPreviewingController {
+class PreviewViewController: NSViewController, QLPreviewingController, QLPreviewPanelDelegate {
     
     override var nibName: NSNib.Name? {
         return NSNib.Name("PreviewViewController")
     }
-
-    override func loadView() {
-        super.loadView()
-//        super.preferredContentSize = (si_doc?.size)!
-//        super.preferredContentSize = view.intrinsicContentSize
-        
-        if let panel = QLPreviewPanel.shared() {
-            panel.acceptsMouseMovedEvents = true
-            panel.setContentBorderThickness(0.0, for: .maxX)
-            panel.setContentBorderThickness(0.0, for: .maxY)
-            panel.setContentBorderThickness(0.0, for: .minX)
-            panel.setContentBorderThickness(0.0, for: .minY)
+    
+    // This is supposed to capture keyboard events, but it doesn't?
+    var commandpressed:Bool = false
+    func previewPanel(_ panel: QLPreviewPanel!, handle event: NSEvent!) -> Bool {
+        let kc = event.keyCode
+        if (kc == 37) {
+            if event.type == .keyDown {
+                commandpressed = true
+                self.previewScrollView.setMagnification(3.0, centeredAt: .zero)
+            } else if (event.type == .keyUp) {
+                commandpressed = false
+            }
+            return true
         }
-        
-        // Do any additional setup after loading the view.
+        if (kc == 24) {
+            if event.type == .keyDown {
+                self.previewScrollView.setMagnification(5.0, centeredAt: .zero)
+            }
+            return true
+        }
+        return false
     }
 
     /*
@@ -95,7 +101,6 @@ class PreviewViewController: NSViewController, QLPreviewingController {
             si_doc = metadata
 
             si_doc?.getComposite(pro_file!, {
-                // Calculate size here, then set super.preferredContentSize, and maybe view.size? panel.contentView.size?
                 let preview_size = getImageSize(si_doc: si_doc!, height: 700, minWidth: 300, maxWidth: 1000)
                 let preview_size_w_title = CGSize(width: preview_size.width, height: preview_size.height)
                 super.preferredContentSize = preview_size_w_title
@@ -118,25 +123,6 @@ class PreviewViewController: NSViewController, QLPreviewingController {
         if(event.phase == .changed){
             zoom += event.deltaZ
             self.previewScrollView.setMagnification(zoom / 200, centeredAt: self.view.convert(event.locationInWindow, to: self.previewScrollView.documentView))
-        }
-    }
-
-    var commandPressed:Bool = false
-
-    override func keyDown(with event: NSEvent) {
-        zoom = 200.0
-        self.previewScrollView.setMagnification(zoom / 200, centeredAt: NSPoint(x: 0, y: 0))
-
-        if (event.keyCode == 55) {
-            commandPressed = true
-        }
-
-        super.keyDown(with: event)
-    }
-
-    override func keyUp(with event: NSEvent) {
-        if (event.keyCode == 55) {
-            commandPressed = false
         }
     }
 }

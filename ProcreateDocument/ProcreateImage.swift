@@ -179,7 +179,8 @@ func readChunkData(_ chunk: chunkImage) {
         
         let chunk_image:NSImage = imageFromPixels(size: chunk.tileSize!, pixels: dst_pointer, width: Int(chunk.tileSize!.width), height: Int(chunk.tileSize!.height))
         
-        chunk.image = chunk_image.addTextToImage(drawText: "col: \(chunk.column!)\nrow: \(chunk.row!)")
+//        chunk.image = chunk_image.addTextToImage(drawText: "col: \(chunk.column!)\nrow: \(chunk.row!)")
+        chunk.image = chunk_image
     } else {
         debugPrint("error during LZO decompress! :(")
         return
