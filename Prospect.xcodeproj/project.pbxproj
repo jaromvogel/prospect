@@ -147,6 +147,7 @@
 		7EBB0BA7255902DA0089D692 /* ProspectPreview.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ProspectPreview.entitlements; sourceTree = "<group>"; };
 		8A21FD2925E7085C008F148C /* VisualEffectBlur.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VisualEffectBlur.swift; sourceTree = "<group>"; };
 		8AB14DFB25E06C41009D8027 /* ProcreateShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcreateShared.swift; sourceTree = "<group>"; };
+		8AF15D6D25EEF4E100202EC8 /* JSONtest.playground */ = {isa = PBXFileReference; lastKnownFileType = file.playground; name = JSONtest.playground; path = "../../Library/Autosave Information/JSONtest.playground"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -191,6 +192,7 @@
 		7E3E755F2550D7D400AC0775 = {
 			isa = PBXGroup;
 			children = (
+				8AF15D6D25EEF4E100202EC8 /* JSONtest.playground */,
 				7E3E756A2550D7D500AC0775 /* Prospect */,
 				7EBB0B8C255902A80089D692 /* ProspectThumb */,
 				7EBB0BA0255902DA0089D692 /* ProspectPreview */,

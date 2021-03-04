@@ -49,6 +49,7 @@
       buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
+      debugAsWhichUser = "root"
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
       ignoresPersistentStateOnLaunch = "NO"
@@ -70,7 +71,7 @@
       </MacroExpansion>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-t ~/Downloads/procreate\ viewer\ test\ files/Some_Guy_2.procreate"
+            argument = "-t /Users/jarom/Development/Prospect/ProspectThumb/Untitled_Artwork.procreate"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

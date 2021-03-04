@@ -249,7 +249,7 @@ struct ProcreateView: View {
                             InfoCell(label: "Title", value: silica_doc.name ?? "Untitled Artwork")
                             InfoCell(label: "Layer Count", value: String((silica_doc.layers!.count)))
                             InfoCell(label: "Author Name", value: silica_doc.authorName ?? "Unknown")
-                            InfoCell(label: "Size", value: "\(silica_doc.size!.width) x \(silica_doc.size!.height)")
+                            InfoCell(label: "Size", value: "\(String(describing: Int(silica_doc.composite_image?.size.width ?? 0))) x \(String(describing: Int(silica_doc.composite_image?.size.height ?? 0))) px")
                             InfoCell(label: "DPI", value: String((silica_doc.SilicaDocumentArchiveDPIKey)!))
                         }
                         VStack(alignment: .leading, spacing: 20) {
@@ -353,6 +353,12 @@ struct ProspectImageView: NSViewRepresentable {
             if (event.phase == .ended) {
                 appState.magnification = self.magnification
             }
+        }
+        
+        override func rotate(with event: NSEvent) {
+            super.rotate(with: event)
+//            self.frameCenterRotation = CGFloat(-event.rotation)
+//            self.rotate(byDegrees: CGFloat(-event.rotation))
         }
         
 //        override var acceptsFirstResponder: Bool { true }

@@ -179,8 +179,13 @@ func readChunkData(_ chunk: chunkImage) {
         
         let chunk_image:NSImage = imageFromPixels(size: chunk.tileSize!, pixels: dst_pointer, width: Int(chunk.tileSize!.width), height: Int(chunk.tileSize!.height))
         
-//        chunk.image = chunk_image.addTextToImage(drawText: "col: \(chunk.column!)\nrow: \(chunk.row!)")
-        chunk.image = chunk_image
+        chunk.image = chunk_image.addTextToImage(drawText: "col: \(chunk.column!)\nrow: \(chunk.row!)")
+//        chunk.image = chunk_image
+        
+        if (chunk.column == 5 && chunk.row == 3) {
+            chunk.column = 2
+            chunk.row = 2
+        }
     } else {
         debugPrint("error during LZO decompress! :(")
         return
@@ -223,15 +228,18 @@ func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocumen
     
     var comp_image = NSImage(size: (metadata.size)!, actions: { ctx in
  
-        DispatchQueue.global(qos: .userInitiated).sync {
+        DispatchQueue.global(qos: .userInteractive).sync {
             DispatchQueue.concurrentPerform(iterations: chunks.count, execute: { index in
                 decompressChunk(file, chunk: chunks[index])
                 
                 let y_pos = CGFloat(metadata.tileSize! * (chunks[index].row!))
-
-                let rect = CGRect(x: CGFloat(chunks[index].column!) * CGFloat(metadata.tileSize!), y: y_pos, width: chunks[index].image!.size.width, height: chunks[index].image!.size.height)
+                let x_pos = CGFloat(metadata.tileSize! * (chunks[index].column!))
+                print("chunk \(chunks[index].column!) \(chunks[index].row!), draw at: (\(x_pos), \(y_pos)), size: \(chunks[index].image!.size)")
+                
+                let rect = CGRect(x: x_pos, y: y_pos, width: chunks[index].image!.size.width, height: chunks[index].image!.size.height)
                 let image = chunks[index].image!
                 let flipped = image.flipVertically()
+                ctx.setAlpha(0.5)
                 
                 ctx.draw(flipped.cgImage(forProposedRect: nil, context: nil, hints: nil)!, in: rect)
                 
@@ -242,12 +250,16 @@ func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocumen
                     metadata.objectWillChange.send()
                 }
             })
+            assert(Int(counter) == chunks.count, "not all chunks are loaded!")
+            print("everything loaded...?")
         }
     
     })
     
     comp_image = comp_image.rotated(by: CGFloat(metadata.getRotation()) * -1)
 
+    assert(Int(counter) == chunks.count, "chunks not finished loading!")
+    print("returning composite, made of \(counter) of \(chunks.count) chunks")
     return comp_image
 }
 

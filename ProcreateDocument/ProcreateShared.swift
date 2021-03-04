@@ -90,3 +90,35 @@ public func getImageSize(si_doc: SilicaDocument, height: Int = 800, minWidth: In
     
     return CGSize(width: width, height: height)
 }
+
+public func getSwatchesThumb(_ swatches_meta: SwatchesData, _ thumb_size: CGSize) -> NSImage {
+    // use all that complicated swatch info to make a thumbnail image here
+    let test = NSImage(systemSymbolName: "book.circle", accessibilityDescription: nil)
+    return test!
+}
+
+
+public struct SwatchesData: Codable {
+    let name: String
+    let swatches: [SwatchObj]
+    let colorProfiles: [ColorProfiles]
+}
+
+public struct SwatchObj: Codable {
+    let alpha: Int
+    let origin: Int
+    let colorSpace: Int
+    let brightness: CGFloat
+    let components: [CGFloat]
+    let version: String
+    let colorProfile: String
+    let saturation: CGFloat
+    let hue: CGFloat
+}
+
+public struct ColorProfiles: Codable {
+    let colorSpace: Int
+    let hash: String
+    let iccData: String
+    let iccName: String
+}

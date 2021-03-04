@@ -11,10 +11,10 @@
 			<array>
 				<string>procreate</string>
 				<string>brush</string>
+				<string>brushset</string>
+				<string>swatches</string>
 			</array>
 			<key>CFBundleTypeIconFile</key>
-			<string></string>
-			<key>CFBundleTypeName</key>
 			<string></string>
 			<key>CFBundleTypeOSTypes</key>
 			<array>
@@ -36,6 +36,8 @@
 			<array>
 				<string>procreate</string>
 				<string>brush</string>
+				<string>brushset</string>
+				<string>swatches</string>
 			</array>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
