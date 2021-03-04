@@ -18,27 +18,27 @@ class PreviewViewController: NSViewController, QLPreviewingController, QLPreview
         return NSNib.Name("PreviewViewController")
     }
     
-    // This is supposed to capture keyboard events, but it doesn't?
-    var commandpressed:Bool = false
-    func previewPanel(_ panel: QLPreviewPanel!, handle event: NSEvent!) -> Bool {
-        let kc = event.keyCode
-        if (kc == 37) {
-            if event.type == .keyDown {
-                commandpressed = true
-                self.previewScrollView.setMagnification(3.0, centeredAt: .zero)
-            } else if (event.type == .keyUp) {
-                commandpressed = false
-            }
-            return true
-        }
-        if (kc == 24) {
-            if event.type == .keyDown {
-                self.previewScrollView.setMagnification(5.0, centeredAt: .zero)
-            }
-            return true
-        }
-        return false
-    }
+//    // This is supposed to capture keyboard events, but it doesn't?
+//    var commandpressed:Bool = false
+//    func previewPanel(_ panel: QLPreviewPanel!, handle event: NSEvent!) -> Bool {
+//        let kc = event.keyCode
+//        if (kc == 37) {
+//            if event.type == .keyDown {
+//                commandpressed = true
+//                self.previewScrollView.setMagnification(3.0, centeredAt: .zero)
+//            } else if (event.type == .keyUp) {
+//                commandpressed = false
+//            }
+//            return true
+//        }
+//        if (kc == 24) {
+//            if event.type == .keyDown {
+//                self.previewScrollView.setMagnification(5.0, centeredAt: .zero)
+//            }
+//            return true
+//        }
+//        return false
+//    }
 
     /*
      * Implement this method and set QLSupportsSearchableItems to YES in the Info.plist of the extension if you support CoreSpotlight.

@@ -71,7 +71,7 @@
       </MacroExpansion>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "-t /Users/jarom/Development/Prospect/ProspectThumb/Untitled_Artwork.procreate"
+            argument = "-tx /Users/jarom/Downloads/Untitled_Artwork.procreate"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>
