@@ -182,10 +182,6 @@ func readChunkData(_ chunk: chunkImage) {
         chunk.image = chunk_image.addTextToImage(drawText: "col: \(chunk.column!)\nrow: \(chunk.row!)")
 //        chunk.image = chunk_image
         
-        if (chunk.column == 5 && chunk.row == 3) {
-            chunk.column = 2
-            chunk.row = 2
-        }
     } else {
         debugPrint("error during LZO decompress! :(")
         return

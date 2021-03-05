@@ -16,6 +16,8 @@
 			</array>
 			<key>CFBundleTypeIconFile</key>
 			<string></string>
+			<key>CFBundleTypeIconSystemGenerated</key>
+			<integer>0</integer>
 			<key>CFBundleTypeOSTypes</key>
 			<array>
 				<string>????</string>
@@ -39,6 +41,8 @@
 				<string>brushset</string>
 				<string>swatches</string>
 			</array>
+			<key>CFBundleTypeIconSystemGenerated</key>
+			<integer>0</integer>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSHandlerRank</key>

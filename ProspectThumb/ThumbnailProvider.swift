@@ -58,22 +58,23 @@ class ThumbnailProvider: QLThumbnailProvider {
             }
         } else if (ext == "swatches") {
             thumb_size = CGSize(width: 218, height: 64)
-            guard let entry = archive["Swatches.json"] else {
-                return
-            }
-            var swatches_data:Data = Data()
-            do {
-                try _ = archive.extract(entry, bufferSize: UInt32(100000000), consumer: { (data) in
-                    swatches_data.append(data)
-                })
-            } catch {
-                assertionFailure("couldn't get swatches data!")
-                NSLog("\(error)")
-            }
-            swatches_meta = try! JSONDecoder().decode(SwatchesData.self, from: swatches_data)
-            thumb_image = getSwatchesThumb(swatches_meta!, thumb_size!)
+            thumb_size = request.maximumSize
+//            var swatches_data:Data = Data()
+//            thumb_image = getSwatchesThumb(swatches_meta!, thumb_size!)
+//            guard let entry = archive["Swatches.json"] else {
+//                return
+//            }
+//            do {
+//                try _ = archive.extract(entry, bufferSize: UInt32(100000000), consumer: { (data) in
+//                    swatches_data.append(data)
+//                })
+//            } catch {
+//                assertionFailure("couldn't get swatches data!")
+//                NSLog("\(error)")
+//            }
+//            swatches_meta = try! JSONDecoder().decode(SwatchesData.self, from: swatches_data)
             
-//            thumb_image = NSImage(size: thumb_size!)
+            thumb_image = NSImage(size: thumb_size!)
             
         } else if (ext == "brushset") {
             
@@ -98,9 +99,11 @@ class ThumbnailProvider: QLThumbnailProvider {
             }
             
             if (ext == "swatches") {
-                let color = NSColor.red.cgColor
-                current_ctx!.setFillColor(color)
-                current_ctx!.fill(CGRect(origin: .zero, size: thumb_size!))
+//                let color = NSColor.red.cgColor
+//                current_ctx!.setFillColor(color)
+//                current_ctx!.fill(CGRect(origin: .zero, size: thumb_size!))
+                current_ctx!.setFillColor(CGColor.init(red: 1.0, green: 0.5, blue: 0.2, alpha: 1.0))
+                current_ctx!.fill(CGRect(origin: .zero, size: CGSize(width: 20.0, height: 20.0)))
             }
             
             // Draw the thumbnail here.
@@ -127,18 +130,6 @@ class ThumbnailProvider: QLThumbnailProvider {
     }
 }
 
-func getSwatchesThumb(_ swatches_meta: SwatchesData, _ thumb_size: CGSize) -> NSImage {
-    // use all that complicated swatch info to make a thumbnail image here
-    if #available(OSXApplicationExtension 11.0, *) {
-        let test = NSImage(systemSymbolName: "book.circle", accessibilityDescription: nil)
-        return test!
-    } else {
-        // Fallback on earlier versions
-    }
-    return NSImage(size: thumb_size)
-}
-
-
 struct SwatchesData: Codable {
     let name: String
     let swatches: [SwatchObj]
@@ -162,4 +153,13 @@ struct ColorProfiles: Codable {
     let hash: String
     let iccData: String
     let iccName: String
+}
+
+extension NSImage: ObservableObject {
+    convenience init(size: CGSize, actions: (CGContext) -> Void) {
+        self.init(size: size)
+        lockFocusFlipped(false)
+        actions(NSGraphicsContext.current!.cgContext)
+        unlockFocus()
+    }
 }
