@@ -65,30 +65,7 @@ public extension SilicaDocument {
 
 // NSImage extension to init a context easily
 extension NSImage: ObservableObject {
-    convenience init(size: CGSize, actions: (CGContext) -> Void) {
-        self.init(size: size)
-        lockFocusFlipped(false)
-        actions(NSGraphicsContext.current!.cgContext)
-        unlockFocus()
-    }
-    
-    public func flipVertically() -> NSImage {
-        let existingImage: NSImage? = self
-        let existingSize: NSSize? = existingImage?.size
-        let newSize: NSSize? = NSMakeSize((existingSize?.width)!, (existingSize?.height)!)
-        let flipedImage = NSImage(size: newSize!)
-        flipedImage.lockFocus()
-        
-        let t = NSAffineTransform.init()
-        t.translateX(by: 0.0, yBy: (existingSize?.height)!)
-        t.scaleX(by: 1.0, yBy: -1.0)
-        t.concat()
-        
-        let rect:NSRect = NSMakeRect(0, 0, (newSize?.width)!, (newSize?.height)!)
-        existingImage?.draw(at: NSZeroPoint, from: rect, operation: .sourceOver, fraction: 1.0)
-        flipedImage.unlockFocus()
-        return flipedImage
-    }
+
 }
 
 
@@ -179,8 +156,8 @@ func readChunkData(_ chunk: chunkImage) {
         
         let chunk_image:NSImage = imageFromPixels(size: chunk.tileSize!, pixels: dst_pointer, width: Int(chunk.tileSize!.width), height: Int(chunk.tileSize!.height))
         
-        chunk.image = chunk_image.addTextToImage(drawText: "col: \(chunk.column!)\nrow: \(chunk.row!)")
-//        chunk.image = chunk_image
+//        chunk.image = chunk_image.addTextToImage(drawText: "col: \(chunk.column!)\nrow: \(chunk.row!)")
+        chunk.image = chunk_image
         
     } else {
         debugPrint("error during LZO decompress! :(")
@@ -235,7 +212,7 @@ func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocumen
                 let rect = CGRect(x: x_pos, y: y_pos, width: chunks[index].image!.size.width, height: chunks[index].image!.size.height)
                 let image = chunks[index].image!
                 let flipped = image.flipVertically()
-                ctx.setAlpha(0.5)
+//                ctx.setAlpha(0.5)
                 
                 ctx.draw(flipped.cgImage(forProposedRect: nil, context: nil, hints: nil)!, in: rect)
                 

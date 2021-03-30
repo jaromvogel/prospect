@@ -20,6 +20,9 @@ extension UTType {
     static var brushFiles: UTType {
         UTType(filenameExtension: "brush")!
     }
+    static var swatchesFiles: UTType {
+        UTType(filenameExtension: "swatches")!
+    }
 }
 
 public class AppState: ObservableObject {
@@ -30,11 +33,12 @@ let appState = AppState()
 
 struct ProcreateDocumentType: FileDocument {
 
-    static var readableContentTypes: [UTType] { [.procreateFiles, .brushFiles] }
+    static var readableContentTypes: [UTType] { [.procreateFiles, .brushFiles, .swatchesFiles] }
     weak var procreate_doc: SilicaDocument?
     var file_ext: String?
     var image_size: CGSize?
     var brush_thumb: NSImage?
+    var swatches_image: NSImage?
     var isExporting: Bool = false
 
     init(configuration: ReadConfiguration) throws {
@@ -47,6 +51,9 @@ struct ProcreateDocumentType: FileDocument {
         } else if (file_ext == "brush") {
             image_size = CGSize(width: 600, height: 300)
             brush_thumb = getThumbImage(file: configuration.file)
+        } else if (file_ext == "swatches") {
+            image_size = CGSize(width: 600, height: 180)
+            swatches_image = getSwatchesImage(configuration.file)
         }
     }
     
@@ -85,6 +92,8 @@ struct DocumentScene: Scene {
                     file.document.procreate_doc!.cleanUp()
                 } else if (file.document.file_ext == "brush") {
                     file.document.brush_thumb = nil
+                } else if (file.document.file_ext == "swatches") {
+                    file.document.swatches_image = nil
                 }
             }
             .onReceive(exportCommand) { _ in
@@ -208,7 +217,10 @@ struct ContentView: View {
         }
         if (file.file_ext == "brush") {
             BrushView(thumb_image: file.brush_thumb, preview_size: file.image_size!)
-                .frame(width: .infinity, height: .infinity, alignment: .center)
+//                .frame(width: .infinity, height: .infinity, alignment: .center)
+        }
+        if (file.file_ext == "swatches") {
+            ProspectImageView(proImage: file.swatches_image!, image_view_size: file.image_size!)
         }
     }
 }

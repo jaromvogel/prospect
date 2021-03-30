@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7E19FB0026129BFB00813DA6 /* ProcreateShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AB14DFB25E06C41009D8027 /* ProcreateShared.swift */; };
 		7E3E756E2550D7D500AC0775 /* Document.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E3E756D2550D7D500AC0775 /* Document.swift */; };
 		7E3E75702550D7D500AC0775 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E3E756F2550D7D500AC0775 /* ContentView.swift */; };
 		7E3E75722550D7D500AC0775 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7E3E75712550D7D500AC0775 /* Assets.xcassets */; };
@@ -22,7 +23,6 @@
 		7E9BD1D6257DB38B00441917 /* minilzo.h in Headers */ = {isa = PBXBuildFile; fileRef = 7E9BD1BC257DAD1600441917 /* minilzo.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		7E9BD1D9257DB39900441917 /* lzodefs.h in Headers */ = {isa = PBXBuildFile; fileRef = 7E9BD1BB257DAD1600441917 /* lzodefs.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		7E9BD1DC257DB39D00441917 /* lzoconf.h in Headers */ = {isa = PBXBuildFile; fileRef = 7E9BD1B9257DAD1600441917 /* lzoconf.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		7E9BD1EA257DB6E400441917 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 7E9BD1E9257DB6E400441917 /* ZIPFoundation */; };
 		7EB6601625E884BE00E4BB3D /* ExportController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EB6601525E884BE00E4BB3D /* ExportController.swift */; };
 		7EBB0B89255902A80089D692 /* QuickLookThumbnailing.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7EBB0B88255902A80089D692 /* QuickLookThumbnailing.framework */; };
 		7EBB0B8B255902A80089D692 /* Quartz.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7EBB0B8A255902A80089D692 /* Quartz.framework */; };
@@ -32,9 +32,13 @@
 		7EBB0BA2255902DA0089D692 /* PreviewViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EBB0BA1255902DA0089D692 /* PreviewViewController.swift */; };
 		7EBB0BA5255902DA0089D692 /* PreviewViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7EBB0BA3255902DA0089D692 /* PreviewViewController.xib */; };
 		7EBB0BAA255902DA0089D692 /* ProspectPreview.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 7EBB0B9E255902DA0089D692 /* ProspectPreview.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		7EBB0BD3255907C50089D692 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 7EBB0BD2255907C50089D692 /* ZIPFoundation */; };
+		7ECE7C872612AC8400E693E7 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 7ECE7C862612AC8400E693E7 /* ZIPFoundation */; };
+		7EE58A312612AD9700B616E3 /* ZIPFoundation in Frameworks */ = {isa = PBXBuildFile; productRef = 7EE58A302612AD9700B616E3 /* ZIPFoundation */; };
+		7EE58A392612AE4D00B616E3 /* SharedCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EE58A372612AE4D00B616E3 /* SharedCode.swift */; };
+		7EE58A3A2612AE4D00B616E3 /* SharedCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EE58A372612AE4D00B616E3 /* SharedCode.swift */; };
+		7EE58A3E2612B80D00B616E3 /* SharedCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EE58A372612AE4D00B616E3 /* SharedCode.swift */; };
+		7EE58A412612B81500B616E3 /* SharedCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EE58A372612AE4D00B616E3 /* SharedCode.swift */; };
 		8A21FD2A25E7085C008F148C /* VisualEffectBlur.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A21FD2925E7085C008F148C /* VisualEffectBlur.swift */; };
-		8AB14DFC25E06C41009D8027 /* ProcreateShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AB14DFB25E06C41009D8027 /* ProcreateShared.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -145,9 +149,9 @@
 		7EBB0BA4255902DA0089D692 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = Base; path = Base.lproj/PreviewViewController.xib; sourceTree = "<group>"; };
 		7EBB0BA6255902DA0089D692 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7EBB0BA7255902DA0089D692 /* ProspectPreview.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ProspectPreview.entitlements; sourceTree = "<group>"; };
+		7EE58A372612AE4D00B616E3 /* SharedCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SharedCode.swift; path = ProcreateDocument/SharedCode.swift; sourceTree = "<group>"; };
 		8A21FD2925E7085C008F148C /* VisualEffectBlur.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VisualEffectBlur.swift; sourceTree = "<group>"; };
 		8AB14DFB25E06C41009D8027 /* ProcreateShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcreateShared.swift; sourceTree = "<group>"; };
-		8AF15D6D25EEF4E100202EC8 /* JSONtest.playground */ = {isa = PBXFileReference; lastKnownFileType = file.playground; name = JSONtest.playground; path = "../../Library/Autosave Information/JSONtest.playground"; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.swift; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -163,7 +167,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				7E9BD1EA257DB6E400441917 /* ZIPFoundation in Frameworks */,
+				7EE58A312612AD9700B616E3 /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -173,7 +177,7 @@
 			files = (
 				7EBB0B89255902A80089D692 /* QuickLookThumbnailing.framework in Frameworks */,
 				7EBB0B8B255902A80089D692 /* Quartz.framework in Frameworks */,
-				7EBB0BD3255907C50089D692 /* ZIPFoundation in Frameworks */,
+				7ECE7C872612AC8400E693E7 /* ZIPFoundation in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -192,7 +196,7 @@
 		7E3E755F2550D7D400AC0775 = {
 			isa = PBXGroup;
 			children = (
-				8AF15D6D25EEF4E100202EC8 /* JSONtest.playground */,
+				7EE58A372612AE4D00B616E3 /* SharedCode.swift */,
 				7E3E756A2550D7D500AC0775 /* Prospect */,
 				7EBB0B8C255902A80089D692 /* ProspectThumb */,
 				7EBB0BA0255902DA0089D692 /* ProspectPreview */,
@@ -339,7 +343,7 @@
 			);
 			name = ProcreateDocument;
 			packageProductDependencies = (
-				7E9BD1E9257DB6E400441917 /* ZIPFoundation */,
+				7EE58A302612AD9700B616E3 /* ZIPFoundation */,
 			);
 			productName = ProcreateDocument;
 			productReference = 7E9BD1AA257DAC7E00441917 /* ProcreateDocument.framework */;
@@ -360,7 +364,7 @@
 			);
 			name = ProspectThumb;
 			packageProductDependencies = (
-				7EBB0BD2255907C50089D692 /* ZIPFoundation */,
+				7ECE7C862612AC8400E693E7 /* ZIPFoundation */,
 			);
 			productName = ProspectThumb;
 			productReference = 7EBB0B86255902A80089D692 /* ProspectThumb.appex */;
@@ -394,7 +398,7 @@
 			isa = PBXProject;
 			attributes = {
 				LastSwiftUpdateCheck = 1210;
-				LastUpgradeCheck = 1220;
+				LastUpgradeCheck = 1240;
 				TargetAttributes = {
 					7E3E75672550D7D400AC0775 = {
 						CreatedOnToolsVersion = 12.1;
@@ -421,7 +425,7 @@
 			);
 			mainGroup = 7E3E755F2550D7D400AC0775;
 			packageReferences = (
-				7E3E75812550D87600AC0775 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
+				7ECE7C822612AC6200E693E7 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 			);
 			productRefGroup = 7E3E75692550D7D500AC0775 /* Products */;
 			projectDirPath = "";
@@ -476,6 +480,7 @@
 			files = (
 				7E3E756E2550D7D500AC0775 /* Document.swift in Sources */,
 				7E3E75702550D7D500AC0775 /* ContentView.swift in Sources */,
+				7EE58A412612B81500B616E3 /* SharedCode.swift in Sources */,
 				8A21FD2A25E7085C008F148C /* VisualEffectBlur.swift in Sources */,
 				7EB6601625E884BE00E4BB3D /* ExportController.swift in Sources */,
 			);
@@ -485,8 +490,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8AB14DFC25E06C41009D8027 /* ProcreateShared.swift in Sources */,
+				7E19FB0026129BFB00813DA6 /* ProcreateShared.swift in Sources */,
 				7E9BD1BD257DAD1600441917 /* minilzo.c in Sources */,
+				7EE58A3E2612B80D00B616E3 /* SharedCode.swift in Sources */,
 				7E9BD1D1257DB26E00441917 /* ProcreateImage.swift in Sources */,
 				7E9BD1C8257DADBC00441917 /* ProcreateFile.swift in Sources */,
 			);
@@ -497,6 +503,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7EBB0B8E255902A80089D692 /* ThumbnailProvider.swift in Sources */,
+				7EE58A392612AE4D00B616E3 /* SharedCode.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -505,6 +512,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				7EBB0BA2255902DA0089D692 /* PreviewViewController.swift in Sources */,
+				7EE58A3A2612AE4D00B616E3 /* SharedCode.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -917,25 +925,25 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		7E3E75812550D87600AC0775 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
+		7ECE7C822612AC6200E693E7 /* XCRemoteSwiftPackageReference "ZIPFoundation" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/weichsel/ZIPFoundation.git";
 			requirement = {
 				kind = upToNextMajorVersion;
-				minimumVersion = 0.9.11;
+				minimumVersion = 0.9.12;
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		7E9BD1E9257DB6E400441917 /* ZIPFoundation */ = {
+		7ECE7C862612AC8400E693E7 /* ZIPFoundation */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 7E3E75812550D87600AC0775 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			package = 7ECE7C822612AC6200E693E7 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
 			productName = ZIPFoundation;
 		};
-		7EBB0BD2255907C50089D692 /* ZIPFoundation */ = {
+		7EE58A302612AD9700B616E3 /* ZIPFoundation */ = {
 			isa = XCSwiftPackageProductDependency;
-			package = 7E3E75812550D87600AC0775 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
+			package = 7ECE7C822612AC6200E693E7 /* XCRemoteSwiftPackageReference "ZIPFoundation" */;
 			productName = ZIPFoundation;
 		};
 /* End XCSwiftPackageProductDependency section */

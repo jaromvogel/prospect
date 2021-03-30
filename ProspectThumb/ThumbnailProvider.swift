@@ -16,30 +16,15 @@ class ThumbnailProvider: QLThumbnailProvider {
         
         var thumb_size:CGSize?
         var thumb_image:NSImage?
-        var swatches_meta:SwatchesData?
-        
-        guard let archive = Archive(url: request.fileURL, accessMode: .read) else {
-            return
-        }
         
         // Get file extension
         let ext = request.fileURL.pathExtension
+        let filewrapper = try! FileWrapper(url: request.fileURL, options: .immediate)
         
         if (ext == "procreate" || ext == "brush") {
-            guard let entry = archive["QuickLook/Thumbnail.png"] else {
-                return
-            }
-
-            var thumb_data:Data = Data()
-            do {
-                try _ = archive.extract(entry, bufferSize: UInt32(100000000), consumer: { (data) in
-                    thumb_data.append(data)
-                })
-            } catch {
-                NSLog("\(error)")
-            }
-
-            thumb_image = NSImage.init(data: thumb_data)!
+            
+            // Get thumb image
+            thumb_image = getThumbImage(file: filewrapper)
 
             // Figure out if thumb should be portrait or landscape
             var orientation:String = "landscape"
@@ -48,33 +33,22 @@ class ThumbnailProvider: QLThumbnailProvider {
             }
             
             // Calculate size of thumb
-            var short_ratio:CGFloat = 1
-            if (orientation == "landscape") {
-                short_ratio = thumb_image!.size.height / thumb_image!.size.width
-                thumb_size = CGSize(width: request.maximumSize.width, height: request.maximumSize.width * short_ratio)
-            } else {
-                short_ratio = thumb_image!.size.width / thumb_image!.size.height
-                thumb_size = CGSize(width: request.maximumSize.height * short_ratio, height: request.maximumSize.height)
-            }
-        } else if (ext == "swatches") {
-            thumb_size = CGSize(width: 218, height: 64)
-            thumb_size = request.maximumSize
-//            var swatches_data:Data = Data()
-//            thumb_image = getSwatchesThumb(swatches_meta!, thumb_size!)
-//            guard let entry = archive["Swatches.json"] else {
-//                return
-//            }
-//            do {
-//                try _ = archive.extract(entry, bufferSize: UInt32(100000000), consumer: { (data) in
-//                    swatches_data.append(data)
-//                })
-//            } catch {
-//                assertionFailure("couldn't get swatches data!")
-//                NSLog("\(error)")
-//            }
-//            swatches_meta = try! JSONDecoder().decode(SwatchesData.self, from: swatches_data)
+            thumb_size = calcThumbSize(orientation: orientation, image_size: thumb_image!.size, maxSize: request.maximumSize)
             
-            thumb_image = NSImage(size: thumb_size!)
+        } else if (ext == "swatches") {
+            
+            // Get thumb image
+            let swatches_image = getSwatchesImage(filewrapper)
+            
+            // Calculate size of thumb
+            thumb_size = calcThumbSize(orientation: "landscape", image_size: swatches_image.size, maxSize: request.maximumSize)
+            
+            // Draw swatches thumb image at the correct thumbnail size
+            thumb_image = NSImage(size: thumb_size!, actions: { ctx in
+                ctx.setFillColor(NSColor.black.cgColor)
+                ctx.fill(CGRect(origin: .zero, size: thumb_size!))
+                ctx.draw(swatches_image.cgImage(forProposedRect: nil, context: nil, hints: nil)!, in: CGRect(origin: .zero, size: thumb_size!))
+            })
             
         } else if (ext == "brushset") {
             
@@ -96,14 +70,6 @@ class ThumbnailProvider: QLThumbnailProvider {
                 let color = NSColor.black.cgColor
                 current_ctx!.setFillColor(color)
                 current_ctx!.fill(CGRect(origin: .zero, size: thumb_size!))
-            }
-            
-            if (ext == "swatches") {
-//                let color = NSColor.red.cgColor
-//                current_ctx!.setFillColor(color)
-//                current_ctx!.fill(CGRect(origin: .zero, size: thumb_size!))
-                current_ctx!.setFillColor(CGColor.init(red: 1.0, green: 0.5, blue: 0.2, alpha: 1.0))
-                current_ctx!.fill(CGRect(origin: .zero, size: CGSize(width: 20.0, height: 20.0)))
             }
             
             // Draw the thumbnail here.
@@ -130,36 +96,50 @@ class ThumbnailProvider: QLThumbnailProvider {
     }
 }
 
-struct SwatchesData: Codable {
-    let name: String
-    let swatches: [SwatchObj]
-    let colorProfiles: [ColorProfiles]
-}
-
-struct SwatchObj: Codable {
-    let alpha: Int
-    let origin: Int
-    let colorSpace: Int
-    let brightness: CGFloat
-    let components: [CGFloat]
-    let version: String
-    let colorProfile: String
-    let saturation: CGFloat
-    let hue: CGFloat
-}
-
-struct ColorProfiles: Codable {
-    let colorSpace: Int
-    let hash: String
-    let iccData: String
-    let iccName: String
-}
-
-extension NSImage: ObservableObject {
-    convenience init(size: CGSize, actions: (CGContext) -> Void) {
-        self.init(size: size)
-        lockFocusFlipped(false)
-        actions(NSGraphicsContext.current!.cgContext)
-        unlockFocus()
+// Calculate size of thumb
+func calcThumbSize(orientation: String, image_size: CGSize, maxSize: CGSize) -> CGSize {
+    var short_ratio:CGFloat = 1
+    var thumb_size:CGSize
+    if (orientation == "landscape") {
+        short_ratio = image_size.height / image_size.width
+        thumb_size = CGSize(width: maxSize.width, height: maxSize.width * short_ratio)
+    } else {
+        short_ratio = image_size.width / image_size.height
+        thumb_size = CGSize(width: maxSize.height * short_ratio, height: maxSize.height)
     }
+    return thumb_size
 }
+
+//struct SwatchesData: Codable {
+//    let name: String
+//    let swatches: [SwatchObj]
+//    let colorProfiles: [ColorProfiles]
+//}
+//
+//struct SwatchObj: Codable {
+//    let alpha: Int
+//    let origin: Int
+//    let colorSpace: Int
+//    let brightness: CGFloat
+//    let components: [CGFloat]
+//    let version: String
+//    let colorProfile: String
+//    let saturation: CGFloat
+//    let hue: CGFloat
+//}
+//
+//struct ColorProfiles: Codable {
+//    let colorSpace: Int
+//    let hash: String
+//    let iccData: String
+//    let iccName: String
+//}
+
+//extension NSImage {
+//    convenience init(size: CGSize, actions: (CGContext) -> Void) {
+//        self.init(size: size)
+//        lockFocusFlipped(false)
+//        actions(NSGraphicsContext.current!.cgContext)
+//        unlockFocus()
+//    }
+//}

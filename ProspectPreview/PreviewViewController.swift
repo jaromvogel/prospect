@@ -113,6 +113,16 @@ class PreviewViewController: NSViewController, QLPreviewingController, QLPreview
                 // Quick Look will display a loading spinner while the completion handler is not called.
                 handler(nil)
             })
+        } else if (ext == "swatches") {
+            let swatches_thumb = getSwatchesImage(pro_file!)
+            let swatches_size = CGSize(width: 600, height: 180)
+            self.preferredContentSize = swatches_size
+            self.previewScrollView.documentView?.frame.size = swatches_size
+            self.previewScrollView.documentView?.layer?.backgroundColor = .black
+            self.previewScrollView.documentView?.layer?.contentsGravity = .resizeAspect
+            self.previewScrollView.documentView?.layer?.contents = swatches_thumb
+            
+            handler(nil)
         }
         
     }
