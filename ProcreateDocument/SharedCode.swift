@@ -162,7 +162,6 @@ public struct SwatchObjOld: Codable {
 }
 
 
-
 // NSImage Extensions
 extension NSImage {
     convenience init(size: CGSize, actions: (CGContext) -> Void) {

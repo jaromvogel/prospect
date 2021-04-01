@@ -63,12 +63,6 @@ public extension SilicaDocument {
 }
 
 
-// NSImage extension to init a context easily
-extension NSImage: ObservableObject {
-
-}
-
-
 // Read the raw data from a chunk file
 // (This isn't done—currently hardcoded to read a single chunk of layer)
 func getLayerData(_ layer: SilicaLayer, _ columns: Int, _ rows: Int, _ differenceX: Int, _ differenceY: Int, _ file: FileWrapper) -> [chunkImage] {
@@ -110,7 +104,7 @@ func decompressChunk(_ file: FileWrapper, chunk: chunkImage) {
 
     do {
         chunk.data = Data()
-        try _ = archive.extract(entry, bufferSize: UInt32(100000), consumer: { (data) in
+        try _ = archive.extract(entry, bufferSize: UInt32(100000), skipCRC32: true, consumer: { (data) in
             chunk.data?.append(data)
         })
         readChunkData(chunk)
