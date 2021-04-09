@@ -277,6 +277,7 @@ public class VideoSegmentInfo: NSObject, NSCoding {
     public required init?(coder: NSCoder) {
         bitrate = coder.decodeObject(forKey: "bitrate") as! NSNumber?
         frameSize = coder.decodeSize(forKey: "frameSize")
+        sourceOrientation = coder.decodeInteger(forKey: "sourceOrientation")
     }
 
     

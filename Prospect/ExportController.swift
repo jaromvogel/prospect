@@ -9,10 +9,12 @@ import Foundation
 import Cocoa
 
 public class exportController {
-    var si_doc: SilicaDocument?
+    var exportImage: NSImage?
+    var filename: String?
     
-    init(si_doc: SilicaDocument?) {
-        self.si_doc = si_doc
+    init(exportImage: NSImage?, filename: String) {
+        self.exportImage = exportImage
+        self.filename = filename
     }
 
     
@@ -23,7 +25,7 @@ public class exportController {
     @objc func presentDialog(_ sender: Any?) {
         selectedFormat = .png
         panel.nameFieldLabel = "Save image as:"
-        panel.nameFieldStringValue = "\(si_doc!.name ?? "untitled_artwork")"
+        panel.nameFieldStringValue = "\(filename ?? "untitled_artwork")"
         panel.isExtensionHidden = false
         panel.canCreateDirectories = true
         
@@ -73,10 +75,13 @@ public class exportController {
         
         if panel.runModal() == NSApplication.ModalResponse.OK, let fileUrl = panel.directoryURL {
             // Get the image to export
-            let export_image  = si_doc!.composite_image!
+            let export_image = exportImage!
 
+            // Check for '/' character in filename and handle it
+            filename = filename?.replacingOccurrences(of: "/", with: ":")
+            
             // Save the image to the specified url
-            if export_image.save(as: si_doc!.name ?? "untitled_artwork", fileType: self.selectedFormat!, at: fileUrl) {
+            if export_image.save(as: filename ?? "untitled_artwork", fileType: self.selectedFormat!, at: fileUrl) {
                 // Do something here when saving is done
             }
         }

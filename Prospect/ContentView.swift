@@ -113,7 +113,19 @@ struct DocumentScene: Scene {
             }
             .onReceive(exportCommand) { _ in
                 if (fileurl == state.activeurl) {
-                    exportController(si_doc: file.document.procreate_doc).presentDialog(nil)
+                    var exportImage: NSImage?
+                    var exportFilename: String?
+                    if (file.document.file_ext == "procreate") {
+                        exportImage = file.document.procreate_doc!.composite_image
+                        exportFilename = file.document.procreate_doc!.name!
+                    } else if (file.document.file_ext == "brush") {
+                        exportImage = file.document.brush_thumb
+                        exportFilename = String((file.fileURL?.lastPathComponent.split(separator: ".").first)!)
+                    } else if (file.document.file_ext == "swatches") {
+                        exportImage = file.document.swatches_image
+                        exportFilename = String((file.fileURL?.lastPathComponent.split(separator: ".").first)!)
+                    }
+                    exportController(exportImage: exportImage, filename: exportFilename ?? "Unknown").presentDialog(nil)
                 }
             }
             .onReceive(copyCommand) { _ in
@@ -235,7 +247,9 @@ struct ContentView: View {
                         .keyboardShortcut("=", modifiers: .command)
                         Button(action: {
                             // Export
-                            exportController(si_doc: file.procreate_doc!).presentDialog(nil)
+                            let exportImage:NSImage = file.procreate_doc!.composite_image!
+                            let exportFilename:String = file.procreate_doc!.name ?? "Untitled Artwork"
+                            exportController(exportImage: exportImage, filename: exportFilename).presentDialog(nil)
                         }) {
                             Label("Export", systemImage: "square.and.arrow.up")
                         }
@@ -304,11 +318,8 @@ struct ProcreateView: View {
                     Text("loading...")
                         .foregroundColor(Color.white)
                 } else {
-                    PlayerView(queuePlayer: file.timelapsePlayer!)
+                    PlayerContainerView(player: file.timelapsePlayer!, videoMeta: (file.procreate_doc?.SilicaDocumentVideoSegmentInfoKey)!)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-//                    VideoPlayer(
-//                        player: file.timelapsePlayer!
-//                    )
                 }
             }
 
@@ -494,49 +505,6 @@ class ImageViewer: NSScrollView {
 //            super.keyDown(with: event)
 //            print(">> key \(event.keyCode)")
 //        }
-}
-
-
-// Custom video player for timelapse
-struct PlayerView: NSViewRepresentable {
-    var queuePlayer:AVQueuePlayer
-    
-    func makeNSView(context: Context) -> some NSView {
-        return PlayerNSView(frame: CGRect(origin: .zero, size: CGSize(width: 300, height: 300)), queuePlayer: queuePlayer)
-    }
-    
-    func updateNSView(_ nsView: NSViewType, context: Context) {
-        
-    }
-    
-}
-
-class PlayerNSView: NSView {
-    private let playerLayer = AVPlayerLayer()
-    var queuePlayer: AVQueuePlayer
-    
-    init(frame: CGRect, queuePlayer: AVQueuePlayer) {
-        self.queuePlayer = queuePlayer
-        super.init(frame: frame)
-        
-        let player = queuePlayer
-        player.play()
-        
-        playerLayer.player = player
-        let affineTransform = CGAffineTransform(rotationAngle: .pi / 2)
-        playerLayer.setAffineTransform(affineTransform)
-        wantsLayer = true
-        layer?.addSublayer(playerLayer)
-    }
-    
-    required init?(coder: NSCoder) {
-        fatalError("init(coder:) has not been implemented")
-    }
-    
-    override func layout() {
-        super.layout()
-        playerLayer.frame = bounds
-    }
 }
 
 
