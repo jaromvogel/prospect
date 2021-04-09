@@ -124,59 +124,40 @@ public extension SilicaDocument {
         
         // Create the composition
         let mixComposition = AVMutableComposition()
-        let asset1 = assetlist[0]
-        let asset2 = assetlist[1]
-        
-        // Add one asset
-        let firstTrack = mixComposition.addMutableTrack(withMediaType: .video, preferredTrackID: Int32(kCMPersistentTrackID_Invalid))
-        
-        do {
-            try firstTrack!.insertTimeRange(CMTimeRange(start: .zero, duration: asset1.duration), of: asset1.tracks(withMediaType: .video)[0], at: .zero)
-        } catch {
-            print("Failed to load first track")
-        }
-        
-        // Add another asset
-        let secondTrack = mixComposition.addMutableTrack(withMediaType: .video, preferredTrackID: Int32(kCMPersistentTrackID_Invalid))
-            
-        do {
-          try secondTrack!.insertTimeRange(CMTimeRangeMake(start: .zero, duration: asset2.duration), of: asset2.tracks(withMediaType: .video)[0], at: asset1.duration)
-        } catch {
-            print("Failed to load second track")
-        }
-        
-        // Create composition instructions
+        var runningTime:CMTime = .zero
         let mainInstruction = AVMutableVideoCompositionInstruction()
-        mainInstruction.timeRange = CMTimeRangeMake(start: .zero, duration: CMTimeAdd(asset1.duration, asset2.duration))
         
-        let firstInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: firstTrack!)
-        firstInstruction.setOpacity(0.0, at: asset1.duration)
-        let secondInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: secondTrack!)
+        for i in 0..<assetlist.count {
+            let asset = assetlist[i]
+            let track = mixComposition.addMutableTrack(withMediaType: .video, preferredTrackID: Int32(kCMPersistentTrackID_Invalid))
+            
+            do {
+                try track!.insertTimeRange(CMTimeRange(start: .zero, duration: asset.duration), of: asset.tracks(withMediaType: .video)[0], at: runningTime)
+                runningTime = CMTimeAdd(runningTime, asset.duration)
+            } catch {
+                print("Failed to load track \(i)")
+            }
+            
+            let trackInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: track!)
+            trackInstruction.setOpacity(0.0, at: runningTime)
+            mainInstruction.layerInstructions.append(trackInstruction)
+        }
         
-        mainInstruction.layerInstructions = [firstInstruction, secondInstruction]
+        mainInstruction.timeRange = CMTimeRangeMake(start: .zero, duration: runningTime)
+
         let mainComposition = AVMutableVideoComposition()
         mainComposition.instructions = [mainInstruction]
         mainComposition.frameDuration = CMTimeMake(value: 1, timescale: 30)
-        mainComposition.renderSize = CGSize(width: firstTrack!.naturalSize.width, height: firstTrack!.naturalSize.height)
+        mainComposition.renderSize = mixComposition.tracks[0].naturalSize
         
         let playeritem = AVPlayerItem(asset: mixComposition)
         playeritem.videoComposition = mainComposition
         let compPlayer = AVPlayer(playerItem: playeritem)
         
         let player = compPlayer
+        assetlist = []
 
         return player
-        
-//        let segment_1 = getVideoSegment(file: file, segment: 1)
-//        let cacheURL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.appendingPathComponent("segment-1.mp4")
-//
-//        do {
-//            try segment_1.write(to: cacheURL, options: .atomicWrite)
-//        } catch let err {
-//            print("failed with error:", err.localizedDescription)
-//        }
-        
-//        return cacheURL
     }
 }
 

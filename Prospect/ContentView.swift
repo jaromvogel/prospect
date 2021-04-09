@@ -314,12 +314,19 @@ struct ProcreateView: View {
                         .foregroundColor(.white)
                 }
             } else if (viewMode == 2) {
-                if (file.timelapsePlayer == nil) {
-                    Text("loading...")
-                        .foregroundColor(Color.white)
-                } else {
-                    VideoPlayer(player: file.timelapsePlayer!)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                ZStack() {
+                    if (file.timelapsePlayer == nil) {
+                        Text("loading...")
+                            .foregroundColor(Color.white)
+                    } else {
+                        VideoPlayer(player: file.timelapsePlayer!)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                }
+                .onAppear() {
+                    if (file.timelapsePlayer == nil) {
+                        file.timelapsePlayer = silica_doc.getVideo(file: file.wrapper!)
+                    }
                 }
             }
 
@@ -359,11 +366,6 @@ struct ProcreateView: View {
         .padding(0)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black)
-        .onAppear() {
-            if (file.timelapsePlayer == nil) {
-                file.timelapsePlayer = silica_doc.getVideo(file: file.wrapper!)
-            }
-        }
     }
 }
 
