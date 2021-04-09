@@ -126,10 +126,10 @@ public extension SilicaDocument {
         let mixComposition = AVMutableComposition()
         var runningTime:CMTime = .zero
         let mainInstruction = AVMutableVideoCompositionInstruction()
+        let track = mixComposition.addMutableTrack(withMediaType: .video, preferredTrackID: .init(1))
         
         for i in 0..<assetlist.count {
             let asset = assetlist[i]
-            let track = mixComposition.addMutableTrack(withMediaType: .video, preferredTrackID: Int32(kCMPersistentTrackID_Invalid))
             
             do {
                 try track!.insertTimeRange(CMTimeRange(start: .zero, duration: asset.duration), of: asset.tracks(withMediaType: .video)[0], at: runningTime)
@@ -152,10 +152,8 @@ public extension SilicaDocument {
         
         let playeritem = AVPlayerItem(asset: mixComposition)
         playeritem.videoComposition = mainComposition
-        let compPlayer = AVPlayer(playerItem: playeritem)
-        
-        let player = compPlayer
-        assetlist = []
+        let player = AVPlayer(playerItem: playeritem)
+        player.playImmediately(atRate: 1.0)
 
         return player
     }
