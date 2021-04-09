@@ -73,7 +73,7 @@ public func getVideoSegment(file: FileWrapper, segment: Int) -> Data {
 }
 
 public extension SilicaDocument {
-    func getVideo(file: FileWrapper) -> AVQueuePlayer {
+    func getVideo(file: FileWrapper) -> AVPlayer {
         
         let fileManager = FileManager()
         
@@ -97,13 +97,10 @@ public extension SilicaDocument {
             }
         }
         
-        
-        var playeritemlist:Array<AVPlayerItem> = []
+        var assetlist:Array<AVAsset> = []
         do {
             var fileURLs = try fileManager.contentsOfDirectory(at: destinationURL.appendingPathComponent("video/segments"), includingPropertiesForKeys: nil, options: .skipsHiddenFiles)
             // loop through video segments, load them, and put them together here
-            var assetlist:Array<AVAsset> = []
-            var asseturllist:Array<AVURLAsset> = []
             fileURLs.sort(by: { urlitem1, urlitem2 in
                 
                 let c1 = urlitem1.pathComponents.count - 1
@@ -119,18 +116,56 @@ public extension SilicaDocument {
             })
             for url in fileURLs {
                 let asset = AVAsset(url: url)
-                let urlasset = AVURLAsset(url: url)
                 assetlist.append(asset)
-                asseturllist.append(urlasset)
-                playeritemlist.append(AVPlayerItem(url: url))
             }
-//            mergeVideo(assetlist)
         } catch {
             print("couldn't count files for some reason")
         }
         
-        let queuePlayer = AVQueuePlayer(items: playeritemlist)
-        return queuePlayer
+        // Create the composition
+        let mixComposition = AVMutableComposition()
+        let asset1 = assetlist[0]
+        let asset2 = assetlist[1]
+        
+        // Add one asset
+        let firstTrack = mixComposition.addMutableTrack(withMediaType: .video, preferredTrackID: Int32(kCMPersistentTrackID_Invalid))
+        
+        do {
+            try firstTrack!.insertTimeRange(CMTimeRange(start: .zero, duration: asset1.duration), of: asset1.tracks(withMediaType: .video)[0], at: .zero)
+        } catch {
+            print("Failed to load first track")
+        }
+        
+        // Add another asset
+        let secondTrack = mixComposition.addMutableTrack(withMediaType: .video, preferredTrackID: Int32(kCMPersistentTrackID_Invalid))
+            
+        do {
+          try secondTrack!.insertTimeRange(CMTimeRangeMake(start: .zero, duration: asset2.duration), of: asset2.tracks(withMediaType: .video)[0], at: asset1.duration)
+        } catch {
+            print("Failed to load second track")
+        }
+        
+        // Create composition instructions
+        let mainInstruction = AVMutableVideoCompositionInstruction()
+        mainInstruction.timeRange = CMTimeRangeMake(start: .zero, duration: CMTimeAdd(asset1.duration, asset2.duration))
+        
+        let firstInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: firstTrack!)
+        firstInstruction.setOpacity(0.0, at: asset1.duration)
+        let secondInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: secondTrack!)
+        
+        mainInstruction.layerInstructions = [firstInstruction, secondInstruction]
+        let mainComposition = AVMutableVideoComposition()
+        mainComposition.instructions = [mainInstruction]
+        mainComposition.frameDuration = CMTimeMake(value: 1, timescale: 30)
+        mainComposition.renderSize = CGSize(width: firstTrack!.naturalSize.width, height: firstTrack!.naturalSize.height)
+        
+        let playeritem = AVPlayerItem(asset: mixComposition)
+        playeritem.videoComposition = mainComposition
+        let compPlayer = AVPlayer(playerItem: playeritem)
+        
+        let player = compPlayer
+
+        return player
         
 //        let segment_1 = getVideoSegment(file: file, segment: 1)
 //        let cacheURL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.appendingPathComponent("segment-1.mp4")

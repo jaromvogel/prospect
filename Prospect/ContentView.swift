@@ -42,7 +42,7 @@ struct ProcreateDocumentType: FileDocument {
     var image_size: CGSize?
     var brush_thumb: NSImage?
     var swatches_image: NSImage?
-    var timelapsePlayer:AVQueuePlayer?
+    var timelapsePlayer: AVPlayer?
 
     init(configuration: ReadConfiguration) throws {
         // Read the file's contents from file.regularFileContents
@@ -318,7 +318,7 @@ struct ProcreateView: View {
                     Text("loading...")
                         .foregroundColor(Color.white)
                 } else {
-                    PlayerContainerView(player: file.timelapsePlayer!, videoMeta: (file.procreate_doc?.SilicaDocumentVideoSegmentInfoKey)!)
+                    VideoPlayer(player: file.timelapsePlayer!)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }

@@ -38,7 +38,6 @@
 		7EE58A3A2612AE4D00B616E3 /* SharedCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EE58A372612AE4D00B616E3 /* SharedCode.swift */; };
 		7EE58A3E2612B80D00B616E3 /* SharedCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EE58A372612AE4D00B616E3 /* SharedCode.swift */; };
 		7EE58A412612B81500B616E3 /* SharedCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EE58A372612AE4D00B616E3 /* SharedCode.swift */; };
-		7EE58A4C2616DC3700B616E3 /* VideoPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EE58A4B2616DC3700B616E3 /* VideoPlayer.swift */; };
 		8A21FD2A25E7085C008F148C /* VisualEffectBlur.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A21FD2925E7085C008F148C /* VisualEffectBlur.swift */; };
 /* End PBXBuildFile section */
 
@@ -151,7 +150,6 @@
 		7EBB0BA6255902DA0089D692 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7EBB0BA7255902DA0089D692 /* ProspectPreview.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ProspectPreview.entitlements; sourceTree = "<group>"; };
 		7EE58A372612AE4D00B616E3 /* SharedCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SharedCode.swift; path = ProcreateDocument/SharedCode.swift; sourceTree = "<group>"; };
-		7EE58A4B2616DC3700B616E3 /* VideoPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoPlayer.swift; sourceTree = "<group>"; };
 		8A21FD2925E7085C008F148C /* VisualEffectBlur.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VisualEffectBlur.swift; sourceTree = "<group>"; };
 		8AB14DFB25E06C41009D8027 /* ProcreateShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcreateShared.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -224,7 +222,6 @@
 			children = (
 				7E3E756D2550D7D500AC0775 /* Document.swift */,
 				7E3E756F2550D7D500AC0775 /* ContentView.swift */,
-				7EE58A4B2616DC3700B616E3 /* VideoPlayer.swift */,
 				7EB6601525E884BE00E4BB3D /* ExportController.swift */,
 				8A21FD2925E7085C008F148C /* VisualEffectBlur.swift */,
 				7E3E75712550D7D500AC0775 /* Assets.xcassets */,
@@ -482,7 +479,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				7E3E756E2550D7D500AC0775 /* Document.swift in Sources */,
-				7EE58A4C2616DC3700B616E3 /* VideoPlayer.swift in Sources */,
 				7E3E75702550D7D500AC0775 /* ContentView.swift in Sources */,
 				7EE58A412612B81500B616E3 /* SharedCode.swift in Sources */,
 				8A21FD2A25E7085C008F148C /* VisualEffectBlur.swift in Sources */,
