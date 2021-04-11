@@ -1,11 +1,13 @@
 import Foundation
 import Cocoa
 import CoreGraphics
+import AVFoundation
 
 // Silica Document
 @objc(SilicaDocument)
 public class SilicaDocument: NSObject, NSCoding, ObservableObject {
     @Published public var composite_image:NSImage?
+    @Published public var videoPlayer:AVPlayer?
     public var comp_load:CGFloat = 0.0
     
     public var animation:ValkyrieDocumentAnimation?
@@ -84,6 +86,7 @@ public class SilicaDocument: NSObject, NSCoding, ObservableObject {
     
     public func cleanUp() {
         self.composite_image = nil
+        self.videoPlayer = nil
         self.animation = nil
         self.authorName = nil
         self.backgroundColor = nil

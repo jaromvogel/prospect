@@ -72,9 +72,8 @@ public func getVideoSegment(file: FileWrapper, segment: Int) -> Data {
     return segment_data
 }
 
-var player: AVPlayer?
 public extension SilicaDocument {
-    func getVideo(file: FileWrapper) -> AVPlayer {
+    func getVideo(file: FileWrapper) {
         
         let fileManager = FileManager()
         
@@ -153,14 +152,12 @@ public extension SilicaDocument {
         
         let playeritem = AVPlayerItem(asset: mixComposition)
         playeritem.videoComposition = mainComposition
-        player = AVPlayer(playerItem: playeritem)
-        player?.playImmediately(atRate: 1.0)
-
-        return player!
+        self.videoPlayer = AVPlayer(playerItem: playeritem)
+        self.videoPlayer?.playImmediately(atRate: 1.0)
     }
 }
 
-public func exportTimelapse(filename: String, saveToUrl: URL, encoding: String, filetype: AVFileType? = AVFileType.mov, progressUpdater: @escaping (CGFloat) -> Void, completion: @escaping () -> Void) {
+public func exportTimelapse(player: AVPlayer?, filename: String, saveToUrl: URL, encoding: String, filetype: AVFileType? = AVFileType.mov, progressUpdater: @escaping (CGFloat) -> Void, completion: @escaping () -> Void) {
     let destinationURL = saveToUrl.appendingPathComponent(filename).appendingPathExtension("mp4")
 
     let fileManager = FileManager()

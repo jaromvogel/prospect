@@ -44,7 +44,6 @@ struct ProcreateDocumentType: FileDocument {
     var image_size: CGSize?
     var brush_thumb: NSImage?
     var swatches_image: NSImage?
-    var timelapsePlayer: AVPlayer?
 
     init(configuration: ReadConfiguration) throws {
         // Read the file's contents from file.regularFileContents
@@ -53,11 +52,6 @@ struct ProcreateDocumentType: FileDocument {
         if (file_ext == "procreate") {
             wrapper = configuration.file
             procreate_doc = readProcreateDocument(file: configuration.file)
-            
-            /// working on getting video
-//            timelapsePlayer = procreate_doc!.getVideo(file: configuration.file)
-            /// end video
-            
             
             image_size = getImageSize(si_doc: procreate_doc!, minWidth: 300, maxWidth: 1200)
         } else if (file_ext == "brush") {
@@ -106,7 +100,6 @@ struct DocumentScene: Scene {
                 // Clean up memory
                 if (file.document.file_ext == "procreate") {
                     file.document.procreate_doc!.cleanUp()
-                    file.document.timelapsePlayer = nil
                 } else if (file.document.file_ext == "brush") {
                     file.document.brush_thumb = nil
                 } else if (file.document.file_ext == "swatches") {
@@ -256,7 +249,7 @@ struct ContentView: View {
                                 let exportImage:NSImage = file.procreate_doc!.composite_image!
                                 exportController(exportImage: exportImage, filename: exportFilename).presentDialog(nil)
                             } else if (viewMode == 2) {
-                                exportController(exportImage: nil, isTimelapse: true, filename: exportFilename).presentDialog(nil)
+                                exportController(exportImage: nil, isTimelapse: true, TLPlayer: file.procreate_doc?.videoPlayer, filename: exportFilename).presentDialog(nil)
                             }
                         }) {
                             Label("Export", systemImage: "square.and.arrow.up")
@@ -320,12 +313,12 @@ struct ProcreateView: View {
                 }
             } else if (viewMode == 2) {
                 ZStack() {
-                    if (file.timelapsePlayer == nil) {
+                    if (file.procreate_doc?.videoPlayer == nil) {
                         Text("loading...")
                             .foregroundColor(Color.white)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
-                        VideoPlayer(player: file.timelapsePlayer)
+                        VideoPlayer(player: file.procreate_doc?.videoPlayer)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .onTapGesture {
                                 self.show_meta = false
@@ -378,8 +371,8 @@ struct ProcreateView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black)
         .onChange(of: viewMode, perform: { value in
-            if (value == 2 && file.timelapsePlayer == nil) {
-                file.timelapsePlayer = silica_doc.getVideo(file: file.wrapper!)
+            if (value == 2 && file.procreate_doc?.videoPlayer == nil) {
+                silica_doc.getVideo(file: file.wrapper!)
             }
         })
     }

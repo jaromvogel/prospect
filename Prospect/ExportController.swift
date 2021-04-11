@@ -13,11 +13,13 @@ public class exportController {
     var exportImage: NSImage?
     var filename: String?
     var isTimelapse: Bool?
+    var TLPlayer: AVPlayer?
     
-    init(exportImage: NSImage?, isTimelapse: Bool = false, filename: String) {
+    init(exportImage: NSImage?, isTimelapse: Bool = false, TLPlayer: AVPlayer? = nil, filename: String) {
         self.exportImage = exportImage
         self.filename = filename
         self.isTimelapse = isTimelapse
+        self.TLPlayer = TLPlayer
     }
 
     var formats:Array<String>?
@@ -146,7 +148,7 @@ public class exportController {
                 }
                 
                 // Do something to export the video here
-                exportTimelapse(filename: filename!, saveToUrl: fileUrl, encoding: formats![popupButton.indexOfSelectedItem], filetype: selectedVideoFormat, progressUpdater: progressUpdate) {
+                exportTimelapse(player: TLPlayer, filename: filename!, saveToUrl: fileUrl, encoding: formats![popupButton.indexOfSelectedItem], filetype: selectedVideoFormat, progressUpdater: progressUpdate) {
                     appState.exportingTL = false
                     appState.exportProgress = 0.0
                 }
