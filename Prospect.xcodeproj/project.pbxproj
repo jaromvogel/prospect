@@ -12,6 +12,7 @@
 		7E3E75702550D7D500AC0775 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E3E756F2550D7D500AC0775 /* ContentView.swift */; };
 		7E3E75722550D7D500AC0775 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7E3E75712550D7D500AC0775 /* Assets.xcassets */; };
 		7E3E75752550D7D500AC0775 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7E3E75742550D7D500AC0775 /* Preview Assets.xcassets */; };
+		7E74744A2620C7B200E24CA9 /* AVKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7E7474492620C7B200E24CA9 /* AVKit.framework */; };
 		7E9BD1AE257DAC7E00441917 /* ProcreateDocument.h in Headers */ = {isa = PBXBuildFile; fileRef = 7E9BD1AC257DAC7E00441917 /* ProcreateDocument.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		7E9BD1B1257DAC7E00441917 /* ProcreateDocument.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7E9BD1AA257DAC7E00441917 /* ProcreateDocument.framework */; };
 		7E9BD1B2257DAC7E00441917 /* ProcreateDocument.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7E9BD1AA257DAC7E00441917 /* ProcreateDocument.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -128,6 +129,7 @@
 		7E3E75792550D7D500AC0775 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7E3E757A2550D7D500AC0775 /* Prospect.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Prospect.entitlements; sourceTree = "<group>"; };
 		7E3E75A72551DB4300AC0775 /* Prospect-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Prospect-Bridging-Header.h"; sourceTree = "<group>"; };
+		7E7474492620C7B200E24CA9 /* AVKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVKit.framework; path = System/Library/Frameworks/AVKit.framework; sourceTree = SDKROOT; };
 		7E75AEA6257DA3F6007F08DC /* ProcreateFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcreateFile.swift; sourceTree = "<group>"; };
 		7E9BD1AA257DAC7E00441917 /* ProcreateDocument.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ProcreateDocument.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		7E9BD1AC257DAC7E00441917 /* ProcreateDocument.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ProcreateDocument.h; sourceTree = "<group>"; };
@@ -159,6 +161,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7E74744A2620C7B200E24CA9 /* AVKit.framework in Frameworks */,
 				7E9BD1B1257DAC7E00441917 /* ProcreateDocument.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -260,6 +263,7 @@
 		7EBB0B87255902A80089D692 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				7E7474492620C7B200E24CA9 /* AVKit.framework */,
 				7EBB0B88255902A80089D692 /* QuickLookThumbnailing.framework */,
 				7EBB0B8A255902A80089D692 /* Quartz.framework */,
 			);

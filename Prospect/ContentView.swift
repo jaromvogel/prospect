@@ -29,9 +29,11 @@ extension UTType {
 public class AppState: ObservableObject {
     @Published var zoomManager:Dictionary<String, CGFloat> = [String: CGFloat]()
     @Published var activeurl: String?
+    @Published var exportingTL: Bool = false
+    @Published var exportProgress: CGFloat = 0.0
 }
 
-let appState = AppState()
+public let appState = AppState()
 
 struct ProcreateDocumentType: FileDocument {
 
@@ -227,29 +229,35 @@ struct ContentView: View {
                     })
                     ToolbarItemGroup(content: {
                         Spacer()
-                        Button(action: {
-                            // zoom out
-                            if (state.zoomManager[fileurl]! > 1.0) {
-                                state.zoomManager[fileurl]! -= 0.5
+                        if (viewMode == 1) {
+                            Button(action: {
+                                // zoom out
+                                if (state.zoomManager[fileurl]! > 1.0) {
+                                    state.zoomManager[fileurl]! -= 0.5
+                                }
+                            }) {
+                                Label("Zoom out", systemImage: "minus.magnifyingglass")
                             }
-                        }) {
-                            Label("Zoom out", systemImage: "minus.magnifyingglass")
-                        }
-                        .keyboardShortcut("-", modifiers: .command)
-                        Button(action: {
-                            // zoom in
-                            if (state.zoomManager[fileurl]! < 100.0) {
-                                state.zoomManager[fileurl]! += 0.5
+                            .keyboardShortcut("-", modifiers: .command)
+                            Button(action: {
+                                // zoom in
+                                if (state.zoomManager[fileurl]! < 100.0) {
+                                    state.zoomManager[fileurl]! += 0.5
+                                }
+                            }) {
+                                Label("Zoom in", systemImage: "plus.magnifyingglass")
                             }
-                        }) {
-                            Label("Zoom in", systemImage: "plus.magnifyingglass")
+                            .keyboardShortcut("=", modifiers: .command)
                         }
-                        .keyboardShortcut("=", modifiers: .command)
                         Button(action: {
                             // Export
-                            let exportImage:NSImage = file.procreate_doc!.composite_image!
                             let exportFilename:String = file.procreate_doc!.name ?? "Untitled Artwork"
-                            exportController(exportImage: exportImage, filename: exportFilename).presentDialog(nil)
+                            if (viewMode == 1) {
+                                let exportImage:NSImage = file.procreate_doc!.composite_image!
+                                exportController(exportImage: exportImage, filename: exportFilename).presentDialog(nil)
+                            } else if (viewMode == 2) {
+                                exportController(exportImage: nil, isTimelapse: true, filename: exportFilename).presentDialog(nil)
+                            }
                         }) {
                             Label("Export", systemImage: "square.and.arrow.up")
                         }
@@ -264,7 +272,6 @@ struct ContentView: View {
         }
         if (file.file_ext == "brush") {
             BrushView(fileurl: fileurl, thumb_image: file.brush_thumb, preview_size: file.image_size!)
-//                .frame(width: .infinity, height: .infinity, alignment: .center)
                 .onChange(of: isKeyWindow, perform: { value in
                     if (value == true) {
                         state.activeurl = fileurl
@@ -289,13 +296,11 @@ struct ProcreateView: View {
     @State var image_view_size: CGSize
     @Binding var show_meta: Bool
     @Binding var viewMode: Int
+    @ObservedObject var state = appState
     
     func debugReloadImage() {
-        print("reloading")
-//        NSApplication.shared.keyWindow?.close()
-        silica_doc.composite_image = silica_doc.composite_image
-        silica_doc.objectWillChange.send()
-//        silica_doc.composite_image?.objectWillChange.send()
+        //        debug something here
+        print("debug")
     }
     
     var body: some View {
@@ -318,14 +323,20 @@ struct ProcreateView: View {
                     if (file.timelapsePlayer == nil) {
                         Text("loading...")
                             .foregroundColor(Color.white)
-                    } else {
-                        VideoPlayer(player: file.timelapsePlayer!)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else {
+                        VideoPlayer(player: file.timelapsePlayer)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .onTapGesture {
+                                self.show_meta = false
+                            }
                     }
-                }
-                .onAppear() {
-                    if (file.timelapsePlayer == nil) {
-                        file.timelapsePlayer = silica_doc.getVideo(file: file.wrapper!)
+                    if (state.exportingTL == true) {
+                        VStack() {
+                            ProgressBar(progress: $state.exportProgress)
+                        }
+                        .background(VisualEffectBlur(material: .popover))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
                 }
             }
@@ -366,6 +377,11 @@ struct ProcreateView: View {
         .padding(0)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.black)
+        .onChange(of: viewMode, perform: { value in
+            if (value == 2 && file.timelapsePlayer == nil) {
+                file.timelapsePlayer = silica_doc.getVideo(file: file.wrapper!)
+            }
+        })
     }
 }
 
@@ -477,7 +493,6 @@ class ImageViewer: NSScrollView {
     
     init(fileurl: String) {
         self.fileurl = fileurl
-        print(fileurl)
         super.init(frame: NSRect(x: 0.0, y: 0.0, width: 10.0, height: 10.0))
     }
     

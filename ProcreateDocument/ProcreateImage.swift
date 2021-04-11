@@ -203,6 +203,8 @@ func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocumen
                 let x_pos = CGFloat(metadata.tileSize! * (chunks[index].column!))
                 print("chunk \(chunks[index].column!) \(chunks[index].row!), draw at: (\(x_pos), \(y_pos)), size: \(chunks[index].image!.size)")
                 
+                // Something weird is happening here occasionally where a chunk somehow gets set to the wrong position
+                // It's probably some kind of bizarre race condition?
                 let rect = CGRect(x: x_pos, y: y_pos, width: chunks[index].image!.size.width, height: chunks[index].image!.size.height)
                 let image = chunks[index].image!
                 let flipped = image.flipVertically()
@@ -218,7 +220,6 @@ func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocumen
                 }
             })
             assert(Int(counter) == chunks.count, "not all chunks are loaded!")
-            print("everything loaded...?")
         }
     
     })

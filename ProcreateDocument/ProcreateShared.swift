@@ -72,6 +72,7 @@ public func getVideoSegment(file: FileWrapper, segment: Int) -> Data {
     return segment_data
 }
 
+var player: AVPlayer?
 public extension SilicaDocument {
     func getVideo(file: FileWrapper) -> AVPlayer {
         
@@ -152,10 +153,48 @@ public extension SilicaDocument {
         
         let playeritem = AVPlayerItem(asset: mixComposition)
         playeritem.videoComposition = mainComposition
-        let player = AVPlayer(playerItem: playeritem)
-        player.playImmediately(atRate: 1.0)
+        player = AVPlayer(playerItem: playeritem)
+        player?.playImmediately(atRate: 1.0)
 
-        return player
+        return player!
+    }
+}
+
+public func exportTimelapse(filename: String, saveToUrl: URL, encoding: String, filetype: AVFileType? = AVFileType.mov, progressUpdater: @escaping (CGFloat) -> Void, completion: @escaping () -> Void) {
+    let destinationURL = saveToUrl.appendingPathComponent(filename).appendingPathExtension("mp4")
+
+    let fileManager = FileManager()
+    try? fileManager.removeItem(at: destinationURL)
+
+    let mixComposition = player?.currentItem?.asset
+    let mainComposition = player?.currentItem?.videoComposition
+    var preset = AVAssetExportPresetHighestQuality
+    if (encoding == "HEVC") {
+        preset = AVAssetExportPresetHEVCHighestQuality
+    }
+    guard let exporter = AVAssetExportSession(asset: mixComposition!, presetName: preset) else { return }
+    exporter.outputURL = destinationURL
+    exporter.outputFileType = filetype
+    exporter.shouldOptimizeForNetworkUse = false
+    exporter.videoComposition = mainComposition
+    
+    var exportProgressBarTimer:Timer
+    exportProgressBarTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { timer in
+        let progress = CGFloat(exporter.progress)
+        if (progress <= 1.0) {
+            progressUpdater(progress)
+        }
+    }
+    
+    // Perform the Export
+    exporter.exportAsynchronously() {
+        DispatchQueue.main.async {
+            // do something when finished
+            if exporter.status == AVAssetExportSession.Status.completed {
+                completion()
+                exportProgressBarTimer.invalidate()
+            }
+        }
     }
 }
 
