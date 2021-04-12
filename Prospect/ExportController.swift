@@ -34,6 +34,8 @@ public class exportController {
             formats = ["png", "jpg", "bmp", "tiff"]
             selectedFormat = .png
             panel.nameFieldLabel = "Save image as:"
+            // Check for '/' character in filename and handle it
+            filename = filename?.replacingOccurrences(of: "/", with: ":")
             panel.nameFieldStringValue = "\(filename ?? "untitled_artwork")"
             panel.isExtensionHidden = false
             panel.canCreateDirectories = true
@@ -81,12 +83,11 @@ public class exportController {
             if panel.runModal() == NSApplication.ModalResponse.OK, let fileUrl = panel.directoryURL {
                 // Get the image to export
                 let export_image = exportImage!
-
-                // Check for '/' character in filename and handle it
-                filename = filename?.replacingOccurrences(of: "/", with: ":")
+                
+                let exportname = (panel.nameFieldStringValue as NSString).deletingPathExtension
                 
                 // Save the image to the specified url
-                if export_image.save(as: filename ?? "untitled_artwork", fileType: self.selectedFormat!, at: fileUrl) {
+                if export_image.save(as: exportname, fileType: self.selectedFormat!, at: fileUrl) {
                     // Do something here when saving is done
                 }
             }
@@ -96,6 +97,8 @@ public class exportController {
             formats = ["H.264", "HEVC"]
             selectedVideoFormat = AVFileType.mp4
             panel.nameFieldLabel = "Save video as:"
+            // Check for '/' character in filename and handle it
+            filename = filename?.replacingOccurrences(of: "/", with: ":")
             panel.nameFieldStringValue = "\(filename ?? "untitled_artwork")"
             panel.isExtensionHidden = false
             panel.canCreateDirectories = true
@@ -140,19 +143,21 @@ public class exportController {
             label.centerYAnchor.constraint(equalTo: accessoryView.centerYAnchor).isActive = true
             
             if panel.runModal() == NSApplication.ModalResponse.OK, let fileUrl = panel.directoryURL {
-                // Check for '/' character in filename and handle it
-                filename = filename?.replacingOccurrences(of: "/", with: ":")
-                
+
                 appState.exportingTL[fileurl!] = true
                 
                 let progressUpdate = { progress in
                     appState.exportProgress[self.fileurl!] = progress
                 }
                 
+                let exportname = (panel.nameFieldStringValue as NSString).deletingPathExtension
+                TLPlayer!.pause()
+                
                 // Do something to export the video here
-                exportTimelapse(player: TLPlayer, filename: filename!, saveToUrl: fileUrl, encoding: formats![popupButton.indexOfSelectedItem], filetype: selectedVideoFormat, progressUpdater: progressUpdate) {
+                exportTimelapse(player: TLPlayer, filename: exportname, saveToUrl: fileUrl, encoding: formats![popupButton.indexOfSelectedItem], filetype: selectedVideoFormat, progressUpdater: progressUpdate) {
                     appState.exportingTL[self.fileurl!] = false
                     appState.exportProgress[self.fileurl!] = 0.0
+                    self.TLPlayer!.play()
                 }
             }
             

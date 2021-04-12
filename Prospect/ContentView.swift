@@ -307,9 +307,9 @@ struct ProcreateView: View {
                             self.show_meta = false
                         }
                 } else {
-                    ProgressBar(progress: $silica_doc.comp_load)
+                    ProgressView(value: silica_doc.comp_load)
+                        .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .foregroundColor(.white)
                 }
             } else if (viewMode == 2) {
                 ZStack() {
@@ -326,10 +326,9 @@ struct ProcreateView: View {
                     }
                     if (state.exportingTL[fileurl] == true) {
                         VStack() {
-                            ProgressBar(progress: Binding<CGFloat>(
-                                get: { (state.exportProgress[fileurl] ?? 0.0) },
-                                set: { _ in })
-                            )
+                            ProgressView(value: state.exportProgress[fileurl])
+                                .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
                         }
                         .background(VisualEffectBlur(material: .popover))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -372,7 +371,7 @@ struct ProcreateView: View {
         }
         .padding(0)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.black)
+        .background(VisualEffectBlur(material: .popover))
         .onChange(of: viewMode, perform: { value in
             if (value == 2 && file.procreate_doc?.videoPlayer == nil) {
                 silica_doc.getVideo(file: file.wrapper!)
@@ -399,33 +398,6 @@ struct InfoCell: View {
         }
         .frame(maxWidth: .infinity)
         .padding(0)
-    }
-}
-
-
-struct ProgressBar: View {
-    @Binding var progress:CGFloat
-    
-    var body: some View {
-        GeometryReader { geometry in
-            HStack() {
-                VStack() {
-                    Text(Int(progress * 100).description)
-                    ZStack(alignment: .leading) {
-                        Rectangle().frame(width: geometry.size.width / 3, height: 5)
-                            .opacity(0.2)
-                            .foregroundColor(.white)
-                            .cornerRadius(2.5)
-                        Rectangle().frame(width: geometry.size.width / 3 * progress, height: 5)
-                            .foregroundColor(.white)
-                            .opacity(0.9)
-                            .cornerRadius(2.5)
-                    }
-                }
-                .frame(maxHeight: .infinity, alignment: .center)
-            }
-            .frame(maxWidth: .infinity, alignment: .center)
-        }
     }
 }
 
@@ -463,7 +435,8 @@ struct ProspectImageView: NSViewRepresentable {
         scrollView.allowsMagnification = true
         scrollView.autohidesScrollers = true
         scrollView.scrollerStyle = .overlay
-        scrollView.backgroundColor = .black
+//        scrollView.backgroundColor = .clear
+        scrollView.drawsBackground = false
         scrollView.horizontalScrollElasticity = .none
         scrollView.verticalScrollElasticity = .none
         scrollView.scrollsDynamically = true

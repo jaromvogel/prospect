@@ -158,6 +158,7 @@ public extension SilicaDocument {
 }
 
 public func exportTimelapse(player: AVPlayer?, filename: String, saveToUrl: URL, encoding: String, filetype: AVFileType? = AVFileType.mov, progressUpdater: @escaping (CGFloat) -> Void, completion: @escaping () -> Void) {
+    
     let destinationURL = saveToUrl.appendingPathComponent(filename).appendingPathExtension("mp4")
 
     let fileManager = FileManager()
