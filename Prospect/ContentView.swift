@@ -29,8 +29,8 @@ extension UTType {
 public class AppState: ObservableObject {
     @Published var zoomManager:Dictionary<String, CGFloat> = [String: CGFloat]()
     @Published var activeurl: String?
-    @Published var exportingTL: Bool = false
-    @Published var exportProgress: CGFloat = 0.0
+    @Published var exportingTL:Dictionary<String, Bool> = [String: Bool]()
+    @Published var exportProgress:Dictionary<String, CGFloat> = [String: CGFloat]()
 }
 
 public let appState = AppState()
@@ -249,7 +249,7 @@ struct ContentView: View {
                                 let exportImage:NSImage = file.procreate_doc!.composite_image!
                                 exportController(exportImage: exportImage, filename: exportFilename).presentDialog(nil)
                             } else if (viewMode == 2) {
-                                exportController(exportImage: nil, isTimelapse: true, TLPlayer: file.procreate_doc?.videoPlayer, filename: exportFilename).presentDialog(nil)
+                                exportController(exportImage: nil, isTimelapse: true, TLPlayer: file.procreate_doc?.videoPlayer, filename: exportFilename, fileurl: fileurl).presentDialog(nil)
                             }
                         }) {
                             Label("Export", systemImage: "square.and.arrow.up")
@@ -324,9 +324,12 @@ struct ProcreateView: View {
                                 self.show_meta = false
                             }
                     }
-                    if (state.exportingTL == true) {
+                    if (state.exportingTL[fileurl] == true) {
                         VStack() {
-                            ProgressBar(progress: $state.exportProgress)
+                            ProgressBar(progress: Binding<CGFloat>(
+                                get: { (state.exportProgress[fileurl] ?? 0.0) },
+                                set: { _ in })
+                            )
                         }
                         .background(VisualEffectBlur(material: .popover))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)

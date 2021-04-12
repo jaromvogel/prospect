@@ -187,6 +187,18 @@ public func exportTimelapse(player: AVPlayer?, filename: String, saveToUrl: URL,
     exporter.exportAsynchronously() {
         DispatchQueue.main.async {
             // do something when finished
+            if exporter.status == AVAssetExportSession.Status.failed {
+                print("\(filename) export failed!")
+                completion()
+            }
+            if exporter.status == AVAssetExportSession.Status.cancelled {
+                print("\(filename) export cancelled!")
+                completion()
+            }
+            if exporter.status == AVAssetExportSession.Status.waiting {
+                print("\(filename) export waiting!")
+                completion()
+            }
             if exporter.status == AVAssetExportSession.Status.completed {
                 completion()
                 exportProgressBarTimer.invalidate()

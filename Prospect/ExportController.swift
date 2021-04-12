@@ -12,12 +12,14 @@ import AVFoundation
 public class exportController {
     var exportImage: NSImage?
     var filename: String?
+    var fileurl: String?
     var isTimelapse: Bool?
     var TLPlayer: AVPlayer?
     
-    init(exportImage: NSImage?, isTimelapse: Bool = false, TLPlayer: AVPlayer? = nil, filename: String) {
+    init(exportImage: NSImage?, isTimelapse: Bool = false, TLPlayer: AVPlayer? = nil, filename: String, fileurl: String? = nil) {
         self.exportImage = exportImage
         self.filename = filename
+        self.fileurl = fileurl
         self.isTimelapse = isTimelapse
         self.TLPlayer = TLPlayer
     }
@@ -141,16 +143,16 @@ public class exportController {
                 // Check for '/' character in filename and handle it
                 filename = filename?.replacingOccurrences(of: "/", with: ":")
                 
-                appState.exportingTL = true
+                appState.exportingTL[fileurl!] = true
                 
                 let progressUpdate = { progress in
-                    appState.exportProgress = progress
+                    appState.exportProgress[self.fileurl!] = progress
                 }
                 
                 // Do something to export the video here
                 exportTimelapse(player: TLPlayer, filename: filename!, saveToUrl: fileUrl, encoding: formats![popupButton.indexOfSelectedItem], filetype: selectedVideoFormat, progressUpdater: progressUpdate) {
-                    appState.exportingTL = false
-                    appState.exportProgress = 0.0
+                    appState.exportingTL[self.fileurl!] = false
+                    appState.exportProgress[self.fileurl!] = 0.0
                 }
             }
             
