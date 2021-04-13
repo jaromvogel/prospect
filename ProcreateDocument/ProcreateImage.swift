@@ -84,7 +84,7 @@ func getLayerData(_ layer: SilicaLayer, _ columns: Int, _ rows: Int, _ differenc
             
             let filepath = layer.UUID!.appending("/" + filename)
             
-            let chunk:chunkImage = chunkImage(row, column, chunk_tilesize, filename, filepath)
+            let chunk:chunkImage = chunkImage(row, column, chunk_tilesize, filename, filepath, layer.document?.colorProfile?.SiColorProfileArchiveICCNameKey ?? nil)
             
             layer_chunks.append(chunk)
         }
@@ -148,7 +148,7 @@ func readChunkData(_ chunk: chunkImage) {
     if (r == LZO_E_OK) {
         let dst_pointer = UnsafePointer(dst)
         
-        let chunk_image:NSImage = imageFromPixels(size: chunk.tileSize!, pixels: dst_pointer, width: Int(chunk.tileSize!.width), height: Int(chunk.tileSize!.height))
+        let chunk_image:NSImage = imageFromPixels(size: chunk.tileSize!, pixels: dst_pointer, width: Int(chunk.tileSize!.width), height: Int(chunk.tileSize!.height), colorSpace: chunk.colorSpace)
         
 //        chunk.image = chunk_image.addTextToImage(drawText: "col: \(chunk.column!)\nrow: \(chunk.row!)")
         chunk.image = chunk_image
@@ -161,8 +161,15 @@ func readChunkData(_ chunk: chunkImage) {
 
 
 // Create the image chunk from its pixel data
-func imageFromPixels(size: NSSize, pixels: UnsafePointer<UInt8>, width: Int, height: Int) -> NSImage {
-    let rgbColorSpace = CGColorSpaceCreateDeviceRGB()
+func imageFromPixels(size: NSSize, pixels: UnsafePointer<UInt8>, width: Int, height: Int, colorSpace: String?) -> NSImage {
+    var imageColorSpace = CGColorSpace(name: CGColorSpace.sRGB)
+    if (colorSpace == "Display P3") {
+        imageColorSpace = CGColorSpace(name: CGColorSpace.displayP3)
+    }
+    else if (colorSpace == "Generic CMYK Profile") {
+        print("CMYK Color Space—needs some work :|")
+//        imageColorSpace = CGColorSpace(name: CGColorSpace.genericCMYK)
+    }
     let bitmapInfo:CGBitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
     let bitsPerComponent = 8 //number of bits in UInt8
     let bitsPerPixel = 4 * bitsPerComponent //ARGB uses 4 components
@@ -177,7 +184,7 @@ func imageFromPixels(size: NSSize, pixels: UnsafePointer<UInt8>, width: Int, hei
         bitsPerComponent: bitsPerComponent,
         bitsPerPixel: bitsPerPixel,
         bytesPerRow: bytesPerRow,
-        space: rgbColorSpace,
+        space: imageColorSpace!,
         bitmapInfo: bitmapInfo,
         provider: providerRef!,
         decode: nil,
@@ -199,18 +206,12 @@ func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocumen
             DispatchQueue.concurrentPerform(iterations: chunks.count, execute: { index in
                 decompressChunk(file, chunk: chunks[index])
                 
-                let y_pos = CGFloat(metadata.tileSize! * (chunks[index].row!))
-                let x_pos = CGFloat(metadata.tileSize! * (chunks[index].column!))
-                print("chunk \(chunks[index].column!) \(chunks[index].row!), draw at: (\(x_pos), \(y_pos)), size: \(chunks[index].image!.size)")
-                
                 // Something weird is happening here occasionally where a chunk somehow gets set to the wrong position
                 // It's probably some kind of bizarre race condition?
-                let rect = CGRect(x: x_pos, y: y_pos, width: chunks[index].image!.size.width, height: chunks[index].image!.size.height)
                 let image = chunks[index].image!
                 let flipped = image.flipVertically()
-//                ctx.setAlpha(0.5)
                 
-                ctx.draw(flipped.cgImage(forProposedRect: nil, context: nil, hints: nil)!, in: rect)
+                ctx.draw(flipped.cgImage(forProposedRect: nil, context: nil, hints: nil)!, in: chunks[index].rect!)
                 
                 DispatchQueue.main.sync {
                     // keep track of how many chunks have been read and update the progress bar
@@ -225,28 +226,41 @@ func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocumen
     })
     
     comp_image = comp_image.rotated(by: CGFloat(metadata.getRotation()) * -1)
+    if (metadata.flippedVertically == true) {
+        comp_image = comp_image.flipVertically()
+    }
+    if (metadata.flippedHorizontally == true) {
+        comp_image = comp_image.flipHorizontally()
+    }
 
     assert(Int(counter) == chunks.count, "chunks not finished loading!")
-    print("returning composite, made of \(counter) of \(chunks.count) chunks")
     return comp_image
 }
 
 
 class chunkImage {
     var image:NSImage?
+    var colorSpace: String?
     var data:Data?
     var row:Int?
     var column:Int?
     var tileSize:CGSize?
     var filename: String?
     var filepath: String?
+    var x_pos: CGFloat?
+    var y_pos: CGFloat?
+    var rect: CGRect?
     
-    init(_ row: Int, _ column: Int, _ tileSize: CGSize, _ filename: String, _ filepath: String) {
+    init(_ row: Int, _ column: Int, _ tileSize: CGSize, _ filename: String, _ filepath: String, _ colorSpace: String?) {
         self.row = row
         self.column = column
         self.tileSize = tileSize
         self.filename = filename
         self.filepath = filepath
+        self.colorSpace = colorSpace
+        self.x_pos = CGFloat(256 * CGFloat(self.column!))
+        self.y_pos = CGFloat(256 * CGFloat(self.row!))
+        self.rect = CGRect(x: self.x_pos!, y: self.y_pos!, width: self.tileSize!.width, height: self.tileSize!.height)
     }
 }
 
@@ -313,6 +327,9 @@ extension NSImage {
         let savelocation = directory.appendingPathComponent(fileName).appendingPathExtension(fileType.pathExtension)
         guard let tiffRepresentation = tiffRepresentation, directory.isDirectory, !fileName.isEmpty else { return false }
         do {
+//            let bitmap = NSBitmapImageRep(cgImage: self.cgImage(forProposedRect: nil, context: nil, hints: nil)!)
+//            try bitmap.representation(using: fileType, properties: [:])?
+//                .write(to: savelocation)
             try NSBitmapImageRep(data: tiffRepresentation)?
                 .representation(using: fileType, properties: [:])?
                 .write(to: savelocation)

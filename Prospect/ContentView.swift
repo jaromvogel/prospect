@@ -294,6 +294,9 @@ struct ProcreateView: View {
     func debugReloadImage() {
         //        debug something here
         print("debug")
+        print("orientation = \(silica_doc.orientation)")
+        print("sourceOrientation = \(silica_doc.SilicaDocumentVideoSegmentInfoKey?.sourceOrientation)")
+        print("colorinfo = \(silica_doc.colorProfile?.SiColorProfileArchiveICCNameKey!)")
     }
     
     var body: some View {

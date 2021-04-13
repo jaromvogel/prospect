@@ -188,4 +188,22 @@ extension NSImage {
         flippedImage.unlockFocus()
         return flippedImage
     }
+    
+    public func flipHorizontally() -> NSImage {
+        let existingImage: NSImage? = self
+        let existingSize: NSSize? = existingImage?.size
+        let newSize: NSSize? = NSMakeSize((existingSize?.width)!, (existingSize?.height)!)
+        let flippedImage = NSImage(size: newSize!)
+        flippedImage.lockFocus()
+        
+        let t = NSAffineTransform.init()
+        t.translateX(by: (existingSize?.width)!, yBy: 0.0)
+        t.scaleX(by: -1.0, yBy: 1.0)
+        t.concat()
+        
+        let rect:NSRect = NSMakeRect(0, 0, (newSize?.width)!, (newSize?.height)!)
+        existingImage?.draw(at: NSZeroPoint, from: rect, operation: .sourceOver, fraction: 1.0)
+        flippedImage.unlockFocus()
+        return flippedImage
+    }
 }
