@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7E1285FC264753CC008B669D /* BrushFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1285FB264753CC008B669D /* BrushFile.swift */; };
 		7E19FB0026129BFB00813DA6 /* ProcreateShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AB14DFB25E06C41009D8027 /* ProcreateShared.swift */; };
 		7E3E756E2550D7D500AC0775 /* Document.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E3E756D2550D7D500AC0775 /* Document.swift */; };
 		7E3E75702550D7D500AC0775 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E3E756F2550D7D500AC0775 /* ContentView.swift */; };
@@ -121,6 +122,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		7E1285FB264753CC008B669D /* BrushFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrushFile.swift; sourceTree = "<group>"; };
 		7E3E75682550D7D500AC0775 /* Prospect.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Prospect.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7E3E756D2550D7D500AC0775 /* Document.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Document.swift; sourceTree = "<group>"; };
 		7E3E756F2550D7D500AC0775 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -250,6 +252,7 @@
 				7EB0324C255A10CF005F10AF /* ProcreateImage.swift */,
 				8AB14DFB25E06C41009D8027 /* ProcreateShared.swift */,
 				7E75AEA6257DA3F6007F08DC /* ProcreateFile.swift */,
+				7E1285FB264753CC008B669D /* BrushFile.swift */,
 				7E9BD1AC257DAC7E00441917 /* ProcreateDocument.h */,
 				7E9BD1B9257DAD1600441917 /* lzoconf.h */,
 				7E9BD1BB257DAD1600441917 /* lzodefs.h */,
@@ -498,6 +501,7 @@
 				7E9BD1BD257DAD1600441917 /* minilzo.c in Sources */,
 				7EE58A3E2612B80D00B616E3 /* SharedCode.swift in Sources */,
 				7E9BD1D1257DB26E00441917 /* ProcreateImage.swift in Sources */,
+				7E1285FC264753CC008B669D /* BrushFile.swift in Sources */,
 				7E9BD1C8257DADBC00441917 /* ProcreateFile.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -734,6 +738,7 @@
 		7E9BD1B4257DAC7E00441917 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -764,6 +769,7 @@
 		7E9BD1B5257DAC7E00441917 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
@@ -837,7 +843,7 @@
 		7EBB0BAC255902DA0089D692 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = NO;
+				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ProspectPreview/ProspectPreview.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
@@ -859,7 +865,7 @@
 		7EBB0BAD255902DA0089D692 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				APPLICATION_EXTENSION_API_ONLY = NO;
+				APPLICATION_EXTENSION_API_ONLY = YES;
 				CODE_SIGN_ENTITLEMENTS = ProspectPreview/ProspectPreview.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;

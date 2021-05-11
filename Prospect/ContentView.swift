@@ -24,6 +24,9 @@ extension UTType {
     static var swatchesFiles: UTType {
         UTType(filenameExtension: "swatches")!
     }
+    static var brushSetFiles: UTType {
+        UTType(filenameExtension: "brushset")!
+    }
 }
 
 public class AppState: ObservableObject {
@@ -37,16 +40,19 @@ public let appState = AppState()
 
 struct ProcreateDocumentType: FileDocument {
 
-    static var readableContentTypes: [UTType] { [.procreateFiles, .brushFiles, .swatchesFiles] }
+    static var readableContentTypes: [UTType] { [.procreateFiles, .brushFiles, .swatchesFiles, .brushSetFiles] }
     weak var procreate_doc: SilicaDocument?
+    var brushset_file: ProcreateBrushset?
     var wrapper: FileWrapper?
     var file_ext: String?
     var image_size: CGSize?
     var brush_thumb: NSImage?
     var swatches_image: NSImage?
+    var brushset_image: NSImage? = nil
 
     init(configuration: ReadConfiguration) throws {
         // Read the file's contents from file.regularFileContents
+        wrapper = configuration.file
         let filename = configuration.file.filename!
         file_ext = URL(fileURLWithPath: filename).pathExtension
         if (file_ext == "procreate") {
@@ -60,7 +66,14 @@ struct ProcreateDocumentType: FileDocument {
         } else if (file_ext == "swatches") {
             image_size = CGSize(width: 600, height: 180)
             swatches_image = getSwatchesImage(configuration.file)
+        } else if (file_ext == "brushset") {
+            brushset_file = ProcreateBrushset()
+            image_size = CGSize(width: 400, height: 600)
         }
+    }
+    
+    mutating func loadBrushSet() {
+        brushset_file?.loadBrushset(file: wrapper!)
     }
     
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
@@ -197,6 +210,7 @@ struct ContentView: View {
     @State var viewMode: Int = 1
     @ObservedObject var state = appState
     @Environment(\.isKeyWindow) var isKeyWindow: Bool
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         if (file.file_ext == "procreate") {
@@ -273,11 +287,50 @@ struct ContentView: View {
         }
         if (file.file_ext == "swatches") {
             ProspectImageView(fileurl: fileurl, proImage: file.swatches_image!, image_view_size: file.image_size!)
+                .background(VisualEffectBlur.init(material: .underWindowBackground))
+//                .environment(\.colorScheme, .dark)
                 .onChange(of: isKeyWindow, perform: { value in
                     if (value == true) {
                         state.activeurl = fileurl
                     }
                 })
+        }
+        if (file.file_ext == "brushset") {
+            BrushsetView(brushset: file.brushset_file!, file: file)
+            .onChange(of: isKeyWindow, perform: { value in
+                if (value == true) {
+                    state.activeurl = fileurl
+                }
+            })
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+}
+
+struct BrushsetView: View {
+    @ObservedObject var brushset: ProcreateBrushset
+    @State var file: ProcreateDocumentType
+    var body: some View {
+        HStack() {
+            if (brushset.brushsetImage != nil) {
+                ScrollView(/*@START_MENU_TOKEN@*/.vertical/*@END_MENU_TOKEN@*/, showsIndicators: /*@START_MENU_TOKEN@*/true/*@END_MENU_TOKEN@*/, content: {
+                    Image(nsImage: brushset.brushsetImage!)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                })
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(VisualEffectBlur.init(material: .underWindowBackground))
+                .environment(\.colorScheme, .dark)
+            } else {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .onAppear() {
+            DispatchQueue.main.async {
+                brushset.loadBrushset(file: file.wrapper!)
+            }
         }
     }
 }
@@ -408,10 +461,15 @@ struct BrushView: View {
     var fileurl: String
     var thumb_image: NSImage?
     var preview_size: CGSize?
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         HStack() {
             ProspectImageView(fileurl: fileurl, proImage: thumb_image!, image_view_size: preview_size!)
+                .if(colorScheme == .light) {
+                    $0.colorInvert()
+                }
+                .background(VisualEffectBlur.init(material: .underWindowBackground))
         }
     }
 }
@@ -524,6 +582,8 @@ class WindowObserver: ObservableObject {
     weak var window: NSWindow? {
         didSet {
             self.isKeyWindow = window?.isKeyWindow ?? false
+            window!.isOpaque = false
+            window!.backgroundColor = NSColor.init(red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0)
             guard let window = window else {
                 self.becomeKeyobserver = nil
                 self.resignKeyobserver = nil
@@ -579,6 +639,17 @@ extension EnvironmentValues {
         }
         set {
             self[IsKeyWindowKey.self] = newValue
+        }
+    }
+}
+
+
+extension View {
+    @ViewBuilder func `if`<T>(_ condition: Bool, transform: (Self) -> T) -> some View where T : View {
+        if condition {
+            transform(self)
+        } else {
+            self
         }
     }
 }

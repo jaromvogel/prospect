@@ -340,14 +340,14 @@ extension NSImage {
         }
     }
     
-    /// DEBUG -> Draw text over image
+    /// Draw text over image
     public func addTextToImage(drawText text: String) -> NSImage {
 
         let targetImage = NSImage(size: self.size, flipped: false) { (dstRect: CGRect) -> Bool in
 
             self.draw(in: dstRect)
-            let textColor = NSColor.red
-            let textFont = NSFont.boldSystemFont(ofSize: 30)
+            let textColor = NSColor.init(red: 0.7, green: 0.7, blue: 0.7, alpha: 1.0)
+            let textFont = NSFont.boldSystemFont(ofSize: 40)
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.alignment = NSTextAlignment.left
 
@@ -356,11 +356,11 @@ extension NSImage {
                 NSAttributedString.Key.foregroundColor: textColor,
                 ] as [NSAttributedString.Key : Any]
 
-            let textOrigin = CGPoint(x: 0, y: 0)
+            let textOrigin = CGPoint(x: 40, y: -29)
             let rect = CGRect(origin: textOrigin, size: self.size)
-            let ctx = NSGraphicsContext.current!.cgContext
-            ctx.scaleBy(x: -1.0, y: 1.0)
-            ctx.translateBy(x: -self.size.width, y: 0.0)
+//            let ctx = NSGraphicsContext.current!.cgContext
+//            ctx.scaleBy(x: -1.0, y: 1.0)
+//            ctx.translateBy(x: -self.size.width, y: 0.0)
             
             text.draw(in: rect, withAttributes: textFontAttributes)
             return true

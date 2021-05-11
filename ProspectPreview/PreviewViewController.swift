@@ -123,6 +123,21 @@ class PreviewViewController: NSViewController, QLPreviewingController, QLPreview
             self.previewScrollView.documentView?.layer?.contents = swatches_thumb
             
             handler(nil)
+        } else if (ext == "brushset") {
+            let metadata: ProcreateBrushset? = ProcreateBrushset()
+            metadata?.loadBrushset(file: pro_file!)
+//            var brushset_load:CGFloat = 0.0
+            let brushset_image = metadata?.brushsetImage
+            let brushset_size = self.view.frame.size
+//            self.preferredMaximumSize = CGSize(width: 200, height: 400)
+            self.preferredContentSize = brushset_size
+            self.title = self.view.frame.debugDescription
+            self.previewScrollView.documentView?.frame.size = brushset_size
+            self.previewScrollView.documentView?.layer?.backgroundColor = .black
+            self.previewScrollView.documentView?.layer?.contentsGravity = .resizeAspect
+            self.previewScrollView.documentView?.layer?.contents = brushset_image
+            
+            handler(nil)
         }
         
     }

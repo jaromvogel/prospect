@@ -35,14 +35,18 @@ public func getBrushPreviewSize(thumb_image: NSImage, orientation: String) -> CG
 }
 
 
-public func getThumbImage(file: FileWrapper) -> NSImage {
+public func getThumbImage(file: FileWrapper, altpath: String? = nil) -> NSImage {
     let archive = Archive(data: file.regularFileContents!, accessMode: .read, preferredEncoding: nil)
-        
-    let entry = archive!["QuickLook/Thumbnail.png"]
+       
+    var path:String = "QuickLook/Thumbnail.png"
+    if (altpath != nil) {
+        path = altpath!
+    }
+    let entry = archive![path]
 
     var thumb_data:Data = Data()
     do {
-        try _ = archive!.extract(entry!, bufferSize: UInt32(100000000), consumer: { (data) in
+        try _ = archive!.extract(entry!, bufferSize: UInt32(100000000), skipCRC32: true, consumer: { (data) in
             thumb_data.append(data)
         })
     } catch {
@@ -52,6 +56,8 @@ public func getThumbImage(file: FileWrapper) -> NSImage {
     let thumb_image:NSImage = NSImage.init(data: thumb_data)!
     return thumb_image
 }
+
+
 
 
 public func getSwatchesImage(_ file: FileWrapper) -> NSImage {
