@@ -46,6 +46,7 @@ struct ProcreateDocumentType: FileDocument {
     var wrapper: FileWrapper?
     var file_ext: String?
     var image_size: CGSize?
+    var brush: SilicaBrush?
     var brush_thumb: NSImage?
     var swatches_image: NSImage?
     var brushset_image: NSImage? = nil
@@ -61,8 +62,9 @@ struct ProcreateDocumentType: FileDocument {
             
             image_size = getImageSize(si_doc: procreate_doc!, minWidth: 300, maxWidth: 1200)
         } else if (file_ext == "brush") {
-            image_size = CGSize(width: 600, height: 300)
-            brush_thumb = getThumbImage(file: configuration.file)
+            brush = readSilicaBrush(file: configuration.file)
+            image_size = CGSize(width: 400, height: 132)
+            brush_thumb = brush!.thumbnail
         } else if (file_ext == "swatches") {
             image_size = CGSize(width: 600, height: 180)
             swatches_image = getSwatchesImage(configuration.file)
@@ -73,7 +75,7 @@ struct ProcreateDocumentType: FileDocument {
     }
     
     mutating func loadBrushSet() {
-        brushset_file?.loadBrushset(file: wrapper!)
+        brushset_file?.getBrushsetImage(file: wrapper!, brushLabels: false)
     }
     
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
@@ -278,7 +280,8 @@ struct ContentView: View {
                 })
         }
         if (file.file_ext == "brush") {
-            BrushView(fileurl: fileurl, thumb_image: file.brush_thumb, preview_size: file.image_size!)
+            BrushView(brush: file.brush!)
+                .background(VisualEffectBlur.init(material: .underWindowBackground))
                 .onChange(of: isKeyWindow, perform: { value in
                     if (value == true) {
                         state.activeurl = fileurl
@@ -297,6 +300,7 @@ struct ContentView: View {
         }
         if (file.file_ext == "brushset") {
             BrushsetView(brushset: file.brushset_file!, file: file)
+            .background(VisualEffectBlur.init(material: .underWindowBackground))
             .onChange(of: isKeyWindow, perform: { value in
                 if (value == true) {
                     state.activeurl = fileurl
@@ -307,33 +311,6 @@ struct ContentView: View {
     }
 }
 
-struct BrushsetView: View {
-    @ObservedObject var brushset: ProcreateBrushset
-    @State var file: ProcreateDocumentType
-    var body: some View {
-        HStack() {
-            if (brushset.brushsetImage != nil) {
-                ScrollView(/*@START_MENU_TOKEN@*/.vertical/*@END_MENU_TOKEN@*/, showsIndicators: /*@START_MENU_TOKEN@*/true/*@END_MENU_TOKEN@*/, content: {
-                    Image(nsImage: brushset.brushsetImage!)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                })
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(VisualEffectBlur.init(material: .underWindowBackground))
-                .environment(\.colorScheme, .dark)
-            } else {
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-        }
-        .onAppear() {
-            DispatchQueue.main.async {
-                brushset.loadBrushset(file: file.wrapper!)
-            }
-        }
-    }
-}
 
 struct ProcreateView: View {
     var fileurl: String
@@ -458,21 +435,89 @@ struct InfoCell: View {
 }
 
 struct BrushView: View {
-    var fileurl: String
-    var thumb_image: NSImage?
-    var preview_size: CGSize?
+    @ObservedObject var brush: SilicaBrush
+    var padding:CGFloat = 5.0
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
-        HStack() {
-            ProspectImageView(fileurl: fileurl, proImage: thumb_image!, image_view_size: preview_size!)
+        ZStack(alignment: .topLeading) {
+            Image(nsImage: brush.thumbnail!)
+                .resizable()
                 .if(colorScheme == .light) {
                     $0.colorInvert()
                 }
-                .background(VisualEffectBlur.init(material: .underWindowBackground))
+                .background(
+                    RoundedRectangle.init(cornerRadius: 6.0)
+                        .foregroundColor(colorScheme == .dark ? .black : .white)
+                        .opacity(0.5)
+                )
+            Text(brush.name!)
+                .font(.system(size: 14.0).weight(.bold))
+                .foregroundColor(Color(colorScheme == .dark ? CGColor.init(gray: 0.7, alpha: 1.0) : CGColor.init(gray: 0.2, alpha: 1.0)))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 11)
         }
+        .padding(padding)
     }
 }
+
+
+struct BrushsetView: View {
+    @ObservedObject var brushset: ProcreateBrushset
+    @State var file: ProcreateDocumentType
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        VStack(spacing: 0) {
+            if (brushset.brushsetImage != nil) {
+                ScrollView(.vertical, showsIndicators: true, content: {
+                    VStack(spacing: 0) {
+                        ForEach(brushset.brushes!, id: \.self) { brush in
+                            BrushView(brush: brush, padding: 0.0)
+                                .frame(maxWidth: .infinity, maxHeight: 118)
+                                .padding(.horizontal, 5.0)
+                                .padding(.top, 5.0)
+                        }
+                    }
+                    .padding(.bottom, 5.0)
+                })
+            } else {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .onAppear() {
+            DispatchQueue.main.async {
+                file.loadBrushSet()
+            }
+        }
+//        HStack() {
+//            if (brushset.brushsetImage != nil) {
+//                ScrollView(/*@START_MENU_TOKEN@*/.vertical/*@END_MENU_TOKEN@*/, showsIndicators: /*@START_MENU_TOKEN@*/true/*@END_MENU_TOKEN@*/, content: {
+//                    Image(nsImage: brushset.brushsetImage!)
+//                        .resizable()
+//                        .aspectRatio(contentMode: .fit)
+//                })
+//                .frame(maxWidth: .infinity, maxHeight: .infinity)
+//                .if (colorScheme == .light) {
+//                    $0.colorInvert()
+//                }
+//                .background(VisualEffectBlur.init(material: .underWindowBackground))
+//            } else {
+//                ProgressView()
+//                    .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
+//                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+//            }
+//        }
+//        .onAppear() {
+//            DispatchQueue.main.async {
+//                brushset.loadBrushset(file: file.wrapper!)
+//            }
+//        }
+    }
+}
+
 
 struct ProspectImageView: NSViewRepresentable {
     var fileurl: String

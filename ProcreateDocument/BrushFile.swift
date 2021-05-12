@@ -12,17 +12,13 @@ import ZIPFoundation
 
 @objc(ProcreateBrushset)
 public class ProcreateBrushset: NSObject, ObservableObject {
-    public var brushes:[SilicaBrush]?
+    @Published public var brushes:[SilicaBrush]? = []
     public var brushsetImage:NSImage?
     public var brushset_load:CGFloat = 0.0
     
     public override init() {}
     
-    public func loadBrushset(file: FileWrapper) {
-        self.getBrushsetImage(file: file)
-    }
-    
-    public func getBrushsetImage(file: FileWrapper) {
+    public func getBrushsetImage(file: FileWrapper, brushLabels: Bool = true) {
         // Step 1: create archive and access brushset.plist file
         let archive = Archive(data: file.regularFileContents!, accessMode: .read, preferredEncoding: nil)
         let entry = archive!["brushset.plist"]
@@ -62,6 +58,9 @@ public class ProcreateBrushset: NSObject, ObservableObject {
                 let thumbpath = (brush as! String).appending("/QuickLook/Thumbnail.png")
                 brushObj?.thumbnail = getThumbImage(file: file, altpath: thumbpath)
                 
+                self.brushes?.append(brushObj!)
+                self.objectWillChange.send()
+                
                 let idx_normal = (brushlist!.count - brush_index - 1)
                 let brush_thumb_pos = CGPoint(x: gap, y: ((184 * idx_normal) + (idx_normal * gap) + gap))
                 ctx.setFillColor(CGColor.init(gray: 0.0, alpha: 0.5))
@@ -78,7 +77,9 @@ public class ProcreateBrushset: NSObject, ObservableObject {
                 ctx.closePath()
                 ctx.fillPath()
                 
-                brushObj!.thumbnail = brushObj!.thumbnail!.addTextToImage(drawText: brushObj!.name ?? "")
+                if (brushLabels == true) {
+                    brushObj!.thumbnail = brushObj!.thumbnail!.addTextToImage(drawText: brushObj!.name ?? "")
+                }
                 ctx.draw(brushObj!.thumbnail!.cgImage(forProposedRect: nil, context: nil, hints: nil)!, in: CGRect(origin: brush_thumb_pos, size: CGSize(width: 600, height: 184)))
             }
         })

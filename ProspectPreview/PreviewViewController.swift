@@ -125,17 +125,24 @@ class PreviewViewController: NSViewController, QLPreviewingController, QLPreview
             handler(nil)
         } else if (ext == "brushset") {
             let metadata: ProcreateBrushset? = ProcreateBrushset()
-            metadata?.loadBrushset(file: pro_file!)
+            metadata?.getBrushsetImage(file: pro_file!)
 //            var brushset_load:CGFloat = 0.0
             let brushset_image = metadata?.brushsetImage
-            let brushset_size = self.view.frame.size
+            var brushset_size = CGSize(width: 400, height: 600)
 //            self.preferredMaximumSize = CGSize(width: 200, height: 400)
+            let aspectsize = CGSize(width: brushset_size.width, height: brushset_size.width / brushset_image!.size.width * brushset_image!.size.height)
+//            self.title = self.view.frame.debugDescription
+            if (brushset_size.height > aspectsize.height) {
+                brushset_size.height = aspectsize.height
+            }
             self.preferredContentSize = brushset_size
-            self.title = self.view.frame.debugDescription
-            self.previewScrollView.documentView?.frame.size = brushset_size
-            self.previewScrollView.documentView?.layer?.backgroundColor = .black
-            self.previewScrollView.documentView?.layer?.contentsGravity = .resizeAspect
+            self.previewScrollView.documentView?.frame.size = aspectsize
+//            self.previewScrollView.documentView?.layer?.backgroundColor = CGColor
+            self.previewScrollView.documentView?.layer?.contentsGravity = .resizeAspectFill
             self.previewScrollView.documentView?.layer?.contents = brushset_image
+            if let documentView = self.previewScrollView.documentView {
+                documentView.scroll(NSPoint(x: 0, y: documentView.bounds.size.height))
+            }
             
             handler(nil)
         }

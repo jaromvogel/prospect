@@ -18,6 +18,14 @@ public func readProcreateDocument(file: FileWrapper) -> SilicaDocument {
     return silica_doc!
 }
 
+public func readSilicaBrush(file: FileWrapper) -> SilicaBrush {
+    let silica_brush = getBrushArchive(file)
+
+    silica_brush?.thumbnail = getThumbImage(file: file)
+    return silica_brush!
+}
+
+
 public func getImageSize(si_doc: SilicaDocument, height: Int = 800, minWidth: Int, maxWidth: Int) -> CGSize {
     var width = height
     var img_height = si_doc.size?.height
