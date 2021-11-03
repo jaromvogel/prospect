@@ -182,36 +182,38 @@ extension NSImage {
     public func flipVertically() -> NSImage {
         let existingImage: NSImage? = self
         let existingSize: NSSize? = existingImage?.size
-        let newSize: NSSize? = NSMakeSize((existingSize?.width)!, (existingSize?.height)!)
-        let flippedImage = NSImage(size: newSize!)
-        flippedImage.lockFocus()
-        
-        let t = NSAffineTransform.init()
-        t.translateX(by: 0.0, yBy: (existingSize?.height)!)
-        t.scaleX(by: 1.0, yBy: -1.0)
-        t.concat()
-        
-        let rect:NSRect = NSMakeRect(0, 0, (newSize?.width)!, (newSize?.height)!)
-        existingImage?.draw(at: NSZeroPoint, from: rect, operation: .sourceOver, fraction: 1.0)
-        flippedImage.unlockFocus()
+        let flippedImage = NSImage.init(size: existingSize!, flipped: false, drawingHandler: { imagerect in
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current?.cgContext.interpolationQuality = .none
+            let t = NSAffineTransform.init()
+            t.translateX(by: 0.0, yBy: (existingSize?.height)!)
+            t.scaleX(by: 1.0, yBy: -1.0)
+            t.concat()
+            
+            let rect:NSRect = NSMakeRect(0, 0, (existingSize?.width)!, (existingSize?.height)!)
+            existingImage?.draw(at: NSZeroPoint, from: rect, operation: .sourceOver, fraction: 1.0)
+            NSGraphicsContext.restoreGraphicsState()
+            return true
+        })
         return flippedImage
     }
     
     public func flipHorizontally() -> NSImage {
         let existingImage: NSImage? = self
         let existingSize: NSSize? = existingImage?.size
-        let newSize: NSSize? = NSMakeSize((existingSize?.width)!, (existingSize?.height)!)
-        let flippedImage = NSImage(size: newSize!)
-        flippedImage.lockFocus()
-        
-        let t = NSAffineTransform.init()
-        t.translateX(by: (existingSize?.width)!, yBy: 0.0)
-        t.scaleX(by: -1.0, yBy: 1.0)
-        t.concat()
-        
-        let rect:NSRect = NSMakeRect(0, 0, (newSize?.width)!, (newSize?.height)!)
-        existingImage?.draw(at: NSZeroPoint, from: rect, operation: .sourceOver, fraction: 1.0)
-        flippedImage.unlockFocus()
+        let flippedImage = NSImage.init(size: existingSize!, flipped: false, drawingHandler: { imagerect in
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current?.cgContext.interpolationQuality = .none
+            let t = NSAffineTransform.init()
+            t.translateX(by: (existingSize?.width)!, yBy: 0.0)
+            t.scaleX(by: -1.0, yBy: 1.0)
+            t.concat()
+            
+            let rect:NSRect = NSMakeRect(0, 0, (existingSize?.width)!, (existingSize?.height)!)
+            existingImage?.draw(at: NSZeroPoint, from: rect, operation: .sourceOver, fraction: 1.0)
+            NSGraphicsContext.restoreGraphicsState()
+            return true
+        })
         return flippedImage
     }
 }

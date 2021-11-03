@@ -212,10 +212,9 @@ func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocumen
                 // Something weird is happening here occasionally where a chunk somehow gets set to the wrong position
                 // It's probably some kind of bizarre race condition?
                 let image = chunks[index].image!
-                let flipped = image.flipVertically()
+                let flipped = image.flipVertically() // This step creates a weird pixel doubling effect for some reason
                 
-                ctx.setAllowsAntialiasing(false)
-                ctx.setShouldAntialias(false)
+                ctx.interpolationQuality = .none
                 ctx.draw(flipped.cgImage(forProposedRect: nil, context: nil, hints: nil)!, in: chunks[index].rect!)
                 
                 DispatchQueue.main.sync {
@@ -250,7 +249,6 @@ func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocumen
     let comp_image_color_corrected = NSImage(data: data)
     
     return comp_image_color_corrected
-//    return comp_image
 }
 
 
@@ -345,9 +343,6 @@ extension NSImage {
         let savelocation = directory.appendingPathComponent(fileName).appendingPathExtension(fileType.pathExtension)
         guard let tiffRepresentation = tiffRepresentation, directory.isDirectory, !fileName.isEmpty else { return false }
         do {
-//            let bitmap = NSBitmapImageRep(cgImage: self.cgImage(forProposedRect: nil, context: nil, hints: nil)!)
-//            try bitmap.representation(using: fileType, properties: [:])?
-//                .write(to: savelocation)
             try NSBitmapImageRep(data: tiffRepresentation)?
                 .representation(using: fileType, properties: [:])?
                 .write(to: savelocation)
@@ -435,6 +430,7 @@ func unscaledBitmapImageRep(forImage image: NSImage) -> NSBitmapImageRep {
 
     NSGraphicsContext.saveGraphicsState()
     NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+    NSGraphicsContext.current?.cgContext.interpolationQuality = .none
     image.draw(at: .zero, from: .zero, operation: .sourceOver, fraction: 1.0)
     NSGraphicsContext.restoreGraphicsState()
 
