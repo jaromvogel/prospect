@@ -7,6 +7,7 @@
 
 import Foundation
 import AppKit
+import Cocoa
 import ZIPFoundation
 
 public extension SilicaDocument {
@@ -190,7 +191,7 @@ func imageFromPixels(size: NSSize, pixels: UnsafePointer<UInt8>, width: Int, hei
         bitmapInfo: bitmapInfo,
         provider: providerRef!,
         decode: nil,
-        shouldInterpolate: true,
+        shouldInterpolate: false,
         intent: .defaultIntent
     )
     return NSImage(cgImage: cgim!, size: size)
@@ -213,6 +214,8 @@ func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocumen
                 let image = chunks[index].image!
                 let flipped = image.flipVertically()
                 
+                ctx.setAllowsAntialiasing(false)
+                ctx.setShouldAntialias(false)
                 ctx.draw(flipped.cgImage(forProposedRect: nil, context: nil, hints: nil)!, in: chunks[index].rect!)
                 
                 DispatchQueue.main.sync {
@@ -237,7 +240,17 @@ func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocumen
 
     assert(Int(counter) == chunks.count, "chunks not finished loading!")
     
-    return comp_image
+    /// Correct image color and size here before returning
+    let comp_image_rep = unscaledBitmapImageRep(forImage: comp_image)
+    let rep = comp_image_rep.retagging(with: NSColorSpace.displayP3)
+
+    guard let data = rep!.representation(using: .png, properties:[.compressionFactor: 1.0]) else {
+        preconditionFailure()
+    }
+    let comp_image_color_corrected = NSImage(data: data)
+    
+    return comp_image_color_corrected
+//    return comp_image
 }
 
 
@@ -400,4 +413,30 @@ extension NSBitmapImageRep.FileType {
             return "unknown"
         }
     }
+}
+
+
+//// Code to deal with scaling the export image and retina resolution
+func unscaledBitmapImageRep(forImage image: NSImage) -> NSBitmapImageRep {
+    guard let rep = NSBitmapImageRep(
+        bitmapDataPlanes: nil,
+        pixelsWide: Int(image.size.width),
+        pixelsHigh: Int(image.size.height),
+        bitsPerSample: 8,
+        samplesPerPixel: 4,
+        hasAlpha: true,
+        isPlanar: false,
+        colorSpaceName: .deviceRGB,
+        bytesPerRow: 0,
+        bitsPerPixel: 0
+    ) else {
+        preconditionFailure()
+    }
+
+    NSGraphicsContext.saveGraphicsState()
+    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+    image.draw(at: .zero, from: .zero, operation: .sourceOver, fraction: 1.0)
+    NSGraphicsContext.restoreGraphicsState()
+
+    return rep
 }

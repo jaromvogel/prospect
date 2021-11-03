@@ -87,14 +87,9 @@ public class exportController {
                 let exportname = (panel.nameFieldStringValue as NSString).deletingPathExtension
                 
                 // Save the image to the specified url
-                do {
-                    try writeImage(image: export_image, usingType: self.selectedFormat!, withSizeInPixels: export_image.size, to: fileUrl.appendingPathComponent(exportname))
-                } catch {
-                    NSLog("\(error)")
+                if export_image.save(as: exportname, fileType: self.selectedFormat!, at: fileUrl) {
+//                     Do something here when saving is done
                 }
-//                if export_image.save(as: exportname, fileType: self.selectedFormat!, at: fileUrl) {
-                    // Do something here when saving is done
-//                }
             }
         }
         else if (isTimelapse == true) {
@@ -185,45 +180,46 @@ public class exportController {
     }
 }
 
-// Code to deal with scaling the export image and retina resolution
-func unscaledBitmapImageRep(forImage image: NSImage) -> NSBitmapImageRep {
-    guard let rep = NSBitmapImageRep(
-        bitmapDataPlanes: nil,
-        pixelsWide: Int(image.size.width),
-        pixelsHigh: Int(image.size.height),
-        bitsPerSample: 8,
-        samplesPerPixel: 4,
-        hasAlpha: true,
-        isPlanar: false,
-        colorSpaceName: .deviceRGB,
-        bytesPerRow: 0,
-        bitsPerPixel: 0
-    ) else {
-        preconditionFailure()
-    }
 
-    NSGraphicsContext.saveGraphicsState()
-    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
-    image.draw(at: .zero, from: .zero, operation: .sourceOver, fraction: 1.0)
-    NSGraphicsContext.restoreGraphicsState()
-
-    return rep
-}
-
-func writeImage(
-    image: NSImage,
-    usingType type: NSBitmapImageRep.FileType,
-    withSizeInPixels size: NSSize?,
-    to url: URL) throws {
-    if let size = size {
-        image.size = size
-    }
-    let rep = unscaledBitmapImageRep(forImage: image)
-    let rep2 = rep.retagging(with: NSColorSpace.displayP3) // This seems to give me the correct color on export, but I need to do this earlier so it's what you see in-app as well
-
-    guard let data = rep2!.representation(using: type, properties:[.compressionFactor: 1.0]) else {
-        preconditionFailure()
-    }
-
-    try data.write(to: url.appendingPathExtension(type.pathExtension))
-}
+//// Code to deal with scaling the export image and retina resolution
+//func unscaledBitmapImageRep(forImage image: NSImage) -> NSBitmapImageRep {
+//    guard let rep = NSBitmapImageRep(
+//        bitmapDataPlanes: nil,
+//        pixelsWide: Int(image.size.width),
+//        pixelsHigh: Int(image.size.height),
+//        bitsPerSample: 8,
+//        samplesPerPixel: 4,
+//        hasAlpha: true,
+//        isPlanar: false,
+//        colorSpaceName: .deviceRGB,
+//        bytesPerRow: 0,
+//        bitsPerPixel: 0
+//    ) else {
+//        preconditionFailure()
+//    }
+//
+//    NSGraphicsContext.saveGraphicsState()
+//    NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: rep)
+//    image.draw(at: .zero, from: .zero, operation: .sourceOver, fraction: 1.0)
+//    NSGraphicsContext.restoreGraphicsState()
+//
+//    return rep
+//}
+//
+//func writeImage(
+//    image: NSImage,
+//    usingType type: NSBitmapImageRep.FileType,
+//    withSizeInPixels size: NSSize?,
+//    to url: URL) throws {
+//    if let size = size {
+//        image.size = size
+//    }
+//    let rep = unscaledBitmapImageRep(forImage: image)
+//    let rep2 = rep.retagging(with: NSColorSpace.displayP3) // This seems to give me the correct color on export, but I need to do this earlier so it's what you see in-app as well
+//
+//    guard let data = rep2!.representation(using: type, properties:[.compressionFactor: 1.0]) else {
+//        preconditionFailure()
+//    }
+//
+//    try data.write(to: url.appendingPathExtension(type.pathExtension))
+//}
