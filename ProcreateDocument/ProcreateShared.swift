@@ -98,7 +98,9 @@ public extension SilicaDocument {
         for entry in archive! {
             do {
                 if (entry.path.contains("video") == true) {
-                    _ = try archive!.extract(entry, to: destinationURL.appendingPathComponent(entry.path), skipCRC32: true)
+// DEBUG MODE
+//                    _ = try archive!.extract(entry, to: destinationURL.appendingPathComponent(entry.path), skipCRC32: true)
+                    _ = try archive!.extract(entry, to: destinationURL.appendingPathComponent(entry.path), skipCRC32: false)
                 }
             } catch {
                 print("didn't work")
@@ -136,6 +138,12 @@ public extension SilicaDocument {
         let mainInstruction = AVMutableVideoCompositionInstruction()
         let track = mixComposition.addMutableTrack(withMediaType: .video, preferredTrackID: .init(1))
         
+        // Figure out if it's landscape, portrait, or square
+        
+        // Use orientation and sourceOrientation values to determine how to rotate the video
+        print("orientation = \(String(describing: self.orientation))")
+        print("sourceOrientation = \(String(describing: self.SilicaDocumentVideoSegmentInfoKey?.sourceOrientation))")
+        
         for i in 0..<assetlist.count {
             let asset = assetlist[i]
             
@@ -148,6 +156,18 @@ public extension SilicaDocument {
             
             let trackInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: track!)
             trackInstruction.setOpacity(0.0, at: runningTime)
+            
+            // Rotate 90° left
+//            let transform = track?.preferredTransform.translatedBy(x: 0.0, y: track!.naturalSize.width).rotated(by: -.pi/2)
+            
+            // Rotate 90° right
+//            let transform = track?.preferredTransform.translatedBy(x: track!.naturalSize.height, y: 0.0).rotated(by: .pi/2)
+            
+            // Rotate 180° (This one might need a little work?)
+//            let transform = track?.preferredTransform.translatedBy(x: self.size!.height, y: self.size!.width).rotated(by: -.pi)
+            
+//            trackInstruction.setTransform(transform!, at: .zero)
+            
             mainInstruction.layerInstructions.append(trackInstruction)
         }
         
@@ -157,6 +177,8 @@ public extension SilicaDocument {
         mainComposition.instructions = [mainInstruction]
         mainComposition.frameDuration = CMTimeMake(value: 1, timescale: 30)
         mainComposition.renderSize = mixComposition.tracks[0].naturalSize
+        // Do this if video is rotated 90°, but not if it's rotated 180°
+//        mainComposition.renderSize = CGSize(width: (track?.naturalSize.height)!, height: (track?.naturalSize.width)!)
         
         let playeritem = AVPlayerItem(asset: mixComposition)
         playeritem.videoComposition = mainComposition

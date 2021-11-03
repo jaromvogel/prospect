@@ -105,9 +105,18 @@ struct DocumentScene: Scene {
         DocumentGroup(viewing: ProcreateDocumentType.self) { file in
             let fileurl = file.fileURL!.absoluteString
             ContentView(file: file.$document, fileurl: fileurl)
-            .frame(width: file.document.image_size!.width, height: file.document.image_size!.height, alignment: .center)
-            // This should make the window resizeable, but for some reason it makes it always show up as a weird landscape size...
-//                .frame(minWidth: 320, idealWidth: file.image_size!.width, maxWidth: .infinity, minHeight: 320, idealHeight: file.image_size!.height, maxHeight: .infinity, alignment: .center)
+                .frame(width: file.document.image_size!.width, height: file.document.image_size!.height, alignment: .center)
+            // This should make the window resizeable, but for some reason it makes it always show up as a weird landscape size as well...
+//                .frame(minWidth: 320, idealWidth: file.document.image_size!.width , maxWidth: .infinity, minHeight: 320, idealHeight: file.document.image_size!.height, maxHeight: .infinity, alignment: .center)
+//                .frame(
+//                    minWidth: file.document.image_size!.width,
+//                    idealWidth: file.document.image_size!.width,
+//                    maxWidth: .infinity,
+//                    minHeight: 100,
+//                    idealHeight: file.document.image_size!.height,
+//                    maxHeight: .infinity,
+//                    alignment: .center
+//                )
             .onAppear() {
                 state.zoomManager[fileurl] = 1.0
             }
@@ -217,7 +226,8 @@ struct ContentView: View {
     var body: some View {
         if (file.file_ext == "procreate") {
             ProcreateView(fileurl: fileurl, file: file, silica_doc: file.procreate_doc!, image_view_size: file.image_size!, show_meta: $show_meta, viewMode: $viewMode)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+//                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .frame(minWidth: file.image_size!.width, minHeight: file.image_size!.height)
                 .toolbar {
                     ToolbarItem(content: {
                         Button(action: {
@@ -370,8 +380,8 @@ struct ProcreateView: View {
             }
 
             VStack() {
-                Spacer()
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+//                Spacer()
+//                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 GeometryReader() { geo in
                     HStack(alignment: .top, spacing: 20) {
                         VStack(alignment: .leading, spacing: 20) {
@@ -429,7 +439,7 @@ struct InfoCell: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .font(.system(size: 16))
         }
-        .frame(maxWidth: .infinity)
+//        .frame(maxWidth: .infinity)
         .padding(0)
     }
 }
@@ -538,6 +548,7 @@ struct ProspectImageView: NSViewRepresentable {
         scrollView.allowedTouchTypes = NSTouch.TouchTypeMask.indirect
         scrollView.documentView = documentView
         scrollView.contentView.scroll(to: CGPoint(x: 0, y: subviewFrame.size.height))
+        scrollView.automaticallyAdjustsContentInsets = true
         scrollView.allowsMagnification = true
         scrollView.autohidesScrollers = true
         scrollView.scrollerStyle = .overlay

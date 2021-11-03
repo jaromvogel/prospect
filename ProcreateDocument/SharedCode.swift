@@ -46,7 +46,9 @@ public func getThumbImage(file: FileWrapper, altpath: String? = nil) -> NSImage 
 
     var thumb_data:Data = Data()
     do {
-        try _ = archive!.extract(entry!, bufferSize: UInt32(100000000), skipCRC32: true, consumer: { (data) in
+// DEBUG MODE
+//        try _ = archive!.extract(entry!, bufferSize: UInt32(100000000), skipCRC32: true, consumer: { (data) in
+        try _ = archive!.extract(entry!, bufferSize: UInt32(100000000), skipCRC32: false, consumer: { (data) in
             thumb_data.append(data)
         })
     } catch {

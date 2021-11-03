@@ -104,7 +104,9 @@ func decompressChunk(_ file: FileWrapper, chunk: chunkImage) {
 
     do {
         chunk.data = Data()
-        try _ = archive.extract(entry, bufferSize: UInt32(100000), skipCRC32: true, consumer: { (data) in
+// DEBUG MODE
+//        try _ = archive.extract(entry, bufferSize: UInt32(100000), skipCRC32: true, consumer: { (data) in
+        try _ = archive.extract(entry, bufferSize: UInt32(100000), skipCRC32: false, consumer: { (data) in
             chunk.data?.append(data)
         })
         readChunkData(chunk)
@@ -163,13 +165,13 @@ func readChunkData(_ chunk: chunkImage) {
 // Create the image chunk from its pixel data
 func imageFromPixels(size: NSSize, pixels: UnsafePointer<UInt8>, width: Int, height: Int, colorSpace: String?) -> NSImage {
     var imageColorSpace = CGColorSpace(name: CGColorSpace.sRGB)
-    if (colorSpace == "Display P3") {
-        imageColorSpace = CGColorSpace(name: CGColorSpace.displayP3)
-    }
-    else if (colorSpace == "Generic CMYK Profile") {
-        print("CMYK Color Space—needs some work :|")
-//        imageColorSpace = CGColorSpace(name: CGColorSpace.genericCMYK)
-    }
+//    if (colorSpace == "Display P3") {
+//        imageColorSpace = CGColorSpace(name: CGColorSpace.displayP3)
+//    }
+//    else if (colorSpace == "Generic CMYK Profile") {
+//        print("CMYK Color Space—needs some work :|")
+////        imageColorSpace = CGColorSpace(name: CGColorSpace.genericCMYK)
+//    }
     let bitmapInfo:CGBitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
     let bitsPerComponent = 8 //number of bits in UInt8
     let bitsPerPixel = 4 * bitsPerComponent //ARGB uses 4 components
@@ -234,6 +236,7 @@ func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocumen
     }
 
     assert(Int(counter) == chunks.count, "chunks not finished loading!")
+    
     return comp_image
 }
 
@@ -277,7 +280,9 @@ public func getArchive(_ file: FileWrapper) -> SilicaDocument? {
     }
     
     do {
-        try _ = archive.extract(entry, bufferSize: UInt32(100000), skipCRC32: true, progress: nil, consumer: { (data) in
+//DEBUG MODE
+//        try _ = archive.extract(entry, bufferSize: UInt32(100000), skipCRC32: true, progress: nil, consumer: { (data) in
+        try _ = archive.extract(entry, bufferSize: UInt32(100000), skipCRC32: false, progress: nil, consumer: { (data) in
             archive_data = readProcreateData(data: data)!
         })
     } catch {

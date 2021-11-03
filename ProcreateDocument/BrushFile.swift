@@ -27,6 +27,8 @@ public class ProcreateBrushset: NSObject, ObservableObject {
         // Step 2: read brushset.plist file into a useful format
         var plist_data:Data = Data()
         do {
+// DEBUG MODE
+//            try _ = archive!.extract(entry!, bufferSize: UInt32(100000000), skipCRC32: true, consumer: { (data) in
             try _ = archive!.extract(entry!, bufferSize: UInt32(100000000), skipCRC32: true, consumer: { (data) in
                 plist_data.append(data)
             })
@@ -41,7 +43,6 @@ public class ProcreateBrushset: NSObject, ObservableObject {
             NSLog("\(error)")
         }
         let brushsetname:String? = plistData["name"] as? String
-        print(brushsetname ?? "blah")
         let brushlist:NSArray? = plistData["brushes"] as? NSArray
         
         // Step 3: loop through each brush in the brushes array, get it's thumbnail image, and draw it into the larger image
@@ -118,6 +119,8 @@ public func getBrushArchive(_ file: FileWrapper, altpath: String? = nil) -> Sili
     }
     
     do {
+// DEBUG MODE
+//        try _ = archive.extract(entry, bufferSize: UInt32(100000), skipCRC32: true, progress: nil, consumer: { (data) in
         try _ = archive.extract(entry, bufferSize: UInt32(100000), skipCRC32: true, progress: nil, consumer: { (data) in
             archive_data = readBrushData(data: data)!
         })
