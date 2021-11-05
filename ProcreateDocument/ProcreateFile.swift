@@ -242,7 +242,7 @@ public class ValkyrieColorProfile: NSObject, NSCoding {
     public func encode(with coder: NSCoder) {}
     
     public required init?(coder: NSCoder) {
-        SiColorProfileArchiveICCDataKey = coder.decodeObject(forKey: "SiColorProfileArchiveICCDataKey") as! Data? //Not working?
+//        SiColorProfileArchiveICCDataKey = coder.decodeObject(forKey: "SiColorProfileArchiveICCDataKey") as! Data? //Not working?
         SiColorProfileArchiveICCNameKey = coder.decodeObject(forKey: "SiColorProfileArchiveICCNameKey") as! String?
     }
     

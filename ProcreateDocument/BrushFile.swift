@@ -42,7 +42,7 @@ public class ProcreateBrushset: NSObject, ObservableObject {
         } catch {
             NSLog("\(error)")
         }
-        let brushsetname:String? = plistData["name"] as? String
+//        let brushsetname:String? = plistData["name"] as? String
         let brushlist:NSArray? = plistData["brushes"] as? NSArray
         
         // Step 3: loop through each brush in the brushes array, get it's thumbnail image, and draw it into the larger image

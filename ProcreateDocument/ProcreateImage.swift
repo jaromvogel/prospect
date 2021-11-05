@@ -165,14 +165,8 @@ func readChunkData(_ chunk: chunkImage) {
 
 // Create the image chunk from its pixel data
 func imageFromPixels(size: NSSize, pixels: UnsafePointer<UInt8>, width: Int, height: Int, colorSpace: String?) -> NSImage {
-    var imageColorSpace = CGColorSpace(name: CGColorSpace.sRGB)
-//    if (colorSpace == "Display P3") {
-//        imageColorSpace = CGColorSpace(name: CGColorSpace.displayP3)
-//    }
-//    else if (colorSpace == "Generic CMYK Profile") {
-//        print("CMYK Color Space—needs some work :|")
-////        imageColorSpace = CGColorSpace(name: CGColorSpace.genericCMYK)
-//    }
+    let imageColorSpace = CGColorSpace(name: CGColorSpace.sRGB)
+
     let bitmapInfo:CGBitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
     let bitsPerComponent = 8 //number of bits in UInt8
     let bitsPerPixel = 4 * bitsPerComponent //ARGB uses 4 components
@@ -240,10 +234,18 @@ func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocumen
     assert(Int(counter) == chunks.count, "chunks not finished loading!")
     
     /// Correct image color and size here before returning
-    let comp_image_rep = unscaledBitmapImageRep(forImage: comp_image)
-    let rep = comp_image_rep.retagging(with: NSColorSpace.displayP3)
+    var rep = unscaledBitmapImageRep(forImage: comp_image, colorProfile: (metadata.colorProfile?.SiColorProfileArchiveICCNameKey)!)
 
-    guard let data = rep!.representation(using: .png, properties:[.compressionFactor: 1.0]) else {
+    let colorProfile:String = (metadata.colorProfile?.SiColorProfileArchiveICCNameKey)!
+    if (colorProfile == "sRGB IEC61966-2.1") {
+        rep = rep.retagging(with: NSColorSpace.extendedSRGB)!
+    } else if (colorProfile == "Display P3") {
+        rep = rep.retagging(with: NSColorSpace.displayP3)!
+    } else if (colorProfile == "Generic CMYK Profile") {
+        rep = rep.retagging(with: NSColorSpace.deviceCMYK)!
+    }
+
+    guard let data = rep.representation(using: .tiff, properties:[.compressionFactor: 1.0]) else {
         preconditionFailure()
     }
     let comp_image_color_corrected = NSImage(data: data)
@@ -411,17 +413,24 @@ extension NSBitmapImageRep.FileType {
 }
 
 
-//// Code to deal with scaling the export image and retina resolution
-func unscaledBitmapImageRep(forImage image: NSImage) -> NSBitmapImageRep {
+/// Code to deal with scaling the export image and retina resolution
+/// Also handles part of colorspace logic
+func unscaledBitmapImageRep(forImage image: NSImage, colorProfile: String) -> NSBitmapImageRep {
+    var hasAlpha = true
+    var colorSpaceName:NSColorSpaceName = .deviceRGB
+    if (colorProfile == "Generic CMYK Profile") {
+        hasAlpha = false
+        colorSpaceName = .deviceCMYK
+    }
     guard let rep = NSBitmapImageRep(
         bitmapDataPlanes: nil,
         pixelsWide: Int(image.size.width),
         pixelsHigh: Int(image.size.height),
         bitsPerSample: 8,
         samplesPerPixel: 4,
-        hasAlpha: true,
+        hasAlpha: hasAlpha, // Needs to be false for CMYK
         isPlanar: false,
-        colorSpaceName: .deviceRGB,
+        colorSpaceName: colorSpaceName,
         bytesPerRow: 0,
         bitsPerPixel: 0
     ) else {
