@@ -14,7 +14,9 @@ import AVFoundation
 public func readProcreateDocument(file: FileWrapper) -> SilicaDocument {
     let silica_doc = getArchive(file)
 
-    silica_doc?.getComposite(file)
+    Task {
+        await silica_doc?.getComposite(file)
+    }
     return silica_doc!
 }
 
