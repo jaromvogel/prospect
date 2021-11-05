@@ -334,9 +334,9 @@ struct ProcreateView: View {
     func debugReloadImage() {
         //        debug something here
         print("debug")
-        print("orientation = \(silica_doc.orientation)")
-        print("sourceOrientation = \(silica_doc.SilicaDocumentVideoSegmentInfoKey?.sourceOrientation)")
-        print("colorinfo = \(silica_doc.colorProfile?.SiColorProfileArchiveICCNameKey!)")
+        print("orientation = \(String(describing: silica_doc.orientation))")
+        print("sourceOrientation = \(String(describing: silica_doc.SilicaDocumentVideoSegmentInfoKey?.sourceOrientation))")
+        print("colorinfo = \(String(describing: silica_doc.colorProfile?.SiColorProfileArchiveICCNameKey!))")
     }
     
     var body: some View {
@@ -406,7 +406,7 @@ struct ProcreateView: View {
                     .background(VisualEffectBlur(material: .popover))
                     .cornerRadius(15)
                     .shadow(radius: 30)
-                    .animation(.spring(response: 0.2, dampingFraction: 0.75, blendDuration: 0.2))
+                    .animation(.spring(response: 0.2, dampingFraction: 0.75, blendDuration: 0.2), value: show_meta)
                     .offset(x: 0, y: show_meta ? 0 : geo.size.height + 100)
                 }
             }

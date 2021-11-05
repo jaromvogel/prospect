@@ -34,13 +34,10 @@ public extension SilicaDocument {
         let image_chunks:Array<chunkImage> = getLayerData((self.composite)!, columns, rows, differenceX, differenceY, file)
 
         var buffer_img:NSImage?
-        DispatchQueue.global(qos: .userInitiated).async {
-            buffer_img = decompressAndCompositeImages(file, self, image_chunks)
-            DispatchQueue.main.async {
-                self.composite_image = buffer_img
-                callback()
-            }
-        }
+
+        buffer_img = decompressAndCompositeImages(file, self, image_chunks)
+        self.composite_image = buffer_img
+        callback()
     }
     
     func getRotation() -> Double {
@@ -198,29 +195,24 @@ func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocumen
     var counter:CGFloat = 0
     
     var comp_image = NSImage(size: (metadata.size)!, actions: { ctx in
- 
-        DispatchQueue.global(qos: .userInteractive).sync {
-            DispatchQueue.concurrentPerform(iterations: chunks.count, execute: { index in
-                decompressChunk(file, chunk: chunks[index])
-                
-                // Something weird is happening here occasionally where a chunk somehow gets set to the wrong position
-                // It's probably some kind of bizarre race condition?
-                let image = chunks[index].image!
-                let flipped = image.flipVertically() // This step creates a weird pixel doubling effect for some reason
-                
-                ctx.interpolationQuality = .none
-                ctx.draw(flipped.cgImage(forProposedRect: nil, context: nil, hints: nil)!, in: chunks[index].rect!)
-                
-                DispatchQueue.main.sync {
-                    // keep track of how many chunks have been read and update the progress bar
-                    counter += 1
-                    metadata.comp_load = counter / CGFloat(chunks.count)
-                    metadata.objectWillChange.send()
-                }
-            })
-            assert(Int(counter) == chunks.count, "not all chunks are loaded!")
+
+        for chunk in chunks {
+            decompressChunk(file, chunk: chunk)
+            
+            // Something weird is happening here occasionally where a chunk somehow gets set to the wrong position
+            // It's probably some kind of bizarre race condition?
+            let image = chunk.image!
+            let flipped = image.flipVertically() // This step creates a weird pixel doubling effect for some reason
+            
+            ctx.interpolationQuality = .none
+            ctx.draw(flipped.cgImage(forProposedRect: nil, context: nil, hints: nil)!, in: chunk.rect!)
+            
+            // keep track of how many chunks have been read and update the progress bar
+            counter += 1
+            metadata.comp_load = counter / CGFloat(chunks.count)
+            metadata.objectWillChange.send()
         }
-    
+        assert(Int(counter) == chunks.count, "not all chunks are loaded!")
     })
     
     comp_image = comp_image.rotated(by: CGFloat(metadata.getRotation()) * -1)
@@ -234,9 +226,9 @@ func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocumen
     assert(Int(counter) == chunks.count, "chunks not finished loading!")
     
     /// Correct image color and size here before returning
-    var rep = unscaledBitmapImageRep(forImage: comp_image, colorProfile: (metadata.colorProfile?.SiColorProfileArchiveICCNameKey)!)
+    let colorProfile:String? = metadata.colorProfile?.SiColorProfileArchiveICCNameKey
+    var rep = unscaledBitmapImageRep(forImage: comp_image, colorProfile: colorProfile ?? "sRGB IEC61966-2.1") // default to sRGB if the file doesn't have a specific color profile
 
-    let colorProfile:String = (metadata.colorProfile?.SiColorProfileArchiveICCNameKey)!
     if (colorProfile == "sRGB IEC61966-2.1") {
         rep = rep.retagging(with: NSColorSpace.extendedSRGB)!
     } else if (colorProfile == "Display P3") {

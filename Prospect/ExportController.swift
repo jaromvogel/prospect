@@ -42,7 +42,8 @@ public class exportController {
             
             panel.message = "Choose your directory"
             panel.prompt = "Choose"
-            panel.allowedFileTypes = ["png"]
+//            panel.allowedFileTypes = ["png"]
+            panel.allowedContentTypes = [.png]
             panel.setFrame(NSRect(x: 0, y: 0, width: 800, height: 500), display: true)
             
             
@@ -105,7 +106,8 @@ public class exportController {
             
             panel.message = "Choose your directory"
             panel.prompt = "Choose"
-            panel.allowedFileTypes = ["mp4"]
+//            panel.allowedFileTypes = ["mp4"]
+            panel.allowedContentTypes = [.mpeg4Movie]
             panel.setFrame(NSRect(x: 0, y: 0, width: 800, height: 500), display: true)
             
             // Add file format selector:
@@ -166,17 +168,22 @@ public class exportController {
 
     @objc func changeFileFormat(_ format: NSPopUpButton) {
         let imageExt = formats![format.indexOfSelectedItem]
+        var selectedType:UTType = .png
         if (imageExt == "png") {
             selectedFormat = .png
+            selectedType = .png
         } else if (imageExt == "jpg") {
             selectedFormat = .jpeg
+            selectedType = .jpeg
         } else if (imageExt == "bmp") {
             selectedFormat = .bmp
+            selectedType = .bmp
         } else if (imageExt == "tiff") {
             selectedFormat = .tiff
+            selectedType = .tiff
         }
         // update the file extension
-        panel.allowedFileTypes = [imageExt]
+        panel.allowedContentTypes = [selectedType]
     }
 }
 
