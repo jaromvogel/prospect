@@ -36,7 +36,12 @@ public extension SilicaDocument {
     
         buffer_img = await calc.createImage(silicadoc: self, (self.composite)!, columns, rows, differenceX, differenceY, file)
 
-        self.composite_image = buffer_img
+        @MainActor
+        func updateImage () {
+            self.composite_image = buffer_img
+        }
+        await updateImage()
+        
         callback()
     }
     
@@ -146,7 +151,11 @@ actor ImageCalc {
                 // keep track of how many chunks have been read and update the progress bar
                 counter += 1
                 metadata.comp_load = counter / CGFloat(chunks.count)
-                metadata.objectWillChange.send()
+                Task.detached {
+                    await MainActor.run {
+                        metadata.objectWillChange.send()
+                    }
+                }
             }
             assert(Int(counter) == chunks.count, "not all chunks are loaded!")
         })
