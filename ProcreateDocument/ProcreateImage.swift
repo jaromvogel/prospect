@@ -65,13 +65,31 @@ public extension SilicaDocument {
     }
 }
 
+/// Actor to count loaded chunks and updated them
+actor loadTracker {
+    var metadata:SilicaDocument?
+    var chunkCount:CGFloat?
+    
+    init(metadata: SilicaDocument, chunkCount: CGFloat) {
+        self.metadata = metadata
+        self.chunkCount = chunkCount
+    }
+    
+    var counter:CGFloat = 0
+    func increment() {
+        counter += 1
+        metadata!.comp_load = counter / chunkCount!
+    }
+}
+
 
 /// BEGIN actually create the image
 actor ImageCalc {
     
     func createImage(silicadoc: SilicaDocument, _ layer: SilicaLayer, _ columns: Int, _ rows: Int, _ differenceX: Int, _ differenceY: Int, _ file: FileWrapper) -> NSImage {
         let image_chunks:Array<chunkImage> = getLayerData(layer, columns, rows, differenceX, differenceY, file)
-        let buffer_img = decompressAndCompositeImages(file, silicadoc, image_chunks)
+        let loadtracker = loadTracker(metadata: silicadoc, chunkCount: CGFloat(image_chunks.count))
+        let buffer_img = decompressAndCompositeImages(file, silicadoc, image_chunks, loadtracker)
         
         return buffer_img!
     }
@@ -133,32 +151,63 @@ actor ImageCalc {
     }
 
     /// Composite image chunks into full layer image
-    private func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocument, _ chunks: Array<chunkImage>) -> NSImage? {
-     
-        var counter:CGFloat = 0
+    private func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocument, _ chunks: Array<chunkImage>, _ loadtracker: loadTracker) -> NSImage? {
         
-        var comp_image = NSImage(size: (metadata.size)!, actions: { ctx in
-
-            for chunk in chunks {
-                decompressChunk(file, chunk: chunk)
-                
-                let image = chunk.image!
-                let flipped = image.flipVertically()
-                
-                ctx.interpolationQuality = .none
-                ctx.draw(flipped.cgImage(forProposedRect: nil, context: nil, hints: nil)!, in: chunk.rect!)
-                
-                // keep track of how many chunks have been read and update the progress bar
-                counter += 1
-                metadata.comp_load = counter / CGFloat(chunks.count)
-                Task.detached {
-                    await MainActor.run {
-                        metadata.objectWillChange.send()
-                    }
+        @Sendable func decompressAllChunks() async {
+            
+            let processedChunks = await withTaskGroup(of: chunkImage.self) { group -> [chunkImage] in
+                for (index, chunk) in chunks.enumerated() {
+                    group.addTask(priority: .high, operation: {
+                        let proc_chunk = await self.decompressChunk(file, chunk: chunk)
+                        await loadtracker.increment()
+                        Task.detached {
+                            await MainActor.run {
+                                metadata.objectWillChange.send()
+                            }
+                        }
+                        print(index)
+                        return proc_chunk!
+                    })
                 }
+                
+                var allChunks = [chunkImage]()
+                       
+                for await result in group {
+                    allChunks.append(result)
+                }
+                       
+                return allChunks
             }
-            assert(Int(counter) == chunks.count, "not all chunks are loaded!")
+        }
+        
+        var comp_image:NSImage = NSImage(size: (metadata.size)!)
+        Task(priority: .high, operation: {
+            await decompressAllChunks()
+            print("done?")
         })
+        
+//        var comp_image = NSImage(size: (metadata.size)!, actions: { ctx in
+//
+//            for chunk in chunks {
+////                decompressChunk(file, chunk: chunk)
+//
+//                let image = chunk.image!
+//                let flipped = image.flipVertically()
+//
+//                ctx.interpolationQuality = .none
+//                ctx.draw(flipped.cgImage(forProposedRect: nil, context: nil, hints: nil)!, in: chunk.rect!)
+//
+//                // keep track of how many chunks have been read and update the progress bar
+//                counter += 1
+//                metadata.comp_load = counter / CGFloat(chunks.count)
+//                Task.detached {
+//                    await MainActor.run {
+//                        metadata.objectWillChange.send()
+//                    }
+//                }
+//            }
+//            assert(Int(counter) == chunks.count, "not all chunks are loaded!")
+//        })
         
         comp_image = comp_image.rotated(by: CGFloat(metadata.getRotation()) * -1)
         if (metadata.flippedVertically == true) {
@@ -168,7 +217,7 @@ actor ImageCalc {
             comp_image = comp_image.flipHorizontally()
         }
 
-        assert(Int(counter) == chunks.count, "chunks not finished loading!")
+//        assert(Int(counter) == chunks.count, "chunks not finished loading!")
         
         /// Correct image color and size here before returning
         let colorProfile:String? = metadata.colorProfile?.SiColorProfileArchiveICCNameKey
@@ -191,13 +240,13 @@ actor ImageCalc {
     }
 
     // unarchive the data from the chunk file, but don't do anything else yet
-    private func decompressChunk(_ file: FileWrapper, chunk: chunkImage) {
+    private func decompressChunk(_ file: FileWrapper, chunk: chunkImage) -> chunkImage? {
         
         guard let archive = Archive(data: file.regularFileContents!, accessMode: .read) else {
-            return
+            return nil
         }
         guard let entry = archive[chunk.filepath!] else {
-            return
+            return nil
         }
 
         do {
@@ -211,6 +260,7 @@ actor ImageCalc {
         } catch {
             NSLog("\(error)")
         }
+        return chunk
     }
 
     // Use miniLZO to decompress the pixel data from a chunk
