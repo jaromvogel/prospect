@@ -102,7 +102,7 @@ class PreviewViewController: NSViewController, QLPreviewingController, QLPreview
 
             let pro_file_2 = pro_file!
             Task {
-                await si_doc?.getComposite(pro_file_2)
+                si_doc?.getComposite(pro_file_2)
                 let preview_size = getImageSize(si_doc: si_doc!, height: 700, minWidth: 300, maxWidth: 1000)
                 let preview_size_w_title = CGSize(width: preview_size.width, height: preview_size.height)
                 super.preferredContentSize = preview_size_w_title
