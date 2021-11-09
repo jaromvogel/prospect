@@ -60,7 +60,7 @@ struct ProcreateDocumentType: FileDocument {
             wrapper = configuration.file
             procreate_doc = readProcreateDocument(file: configuration.file)
             
-            image_size = getImageSize(si_doc: procreate_doc!, minWidth: 300, maxWidth: 1200)
+            image_size = getImageSize(si_doc: procreate_doc!, height: 800, minWidth: 300, maxWidth: 1200)
         } else if (file_ext == "brush") {
             brush = readSilicaBrush(file: configuration.file)
             image_size = CGSize(width: 400, height: 132)
@@ -105,7 +105,9 @@ struct DocumentScene: Scene {
         DocumentGroup(viewing: ProcreateDocumentType.self) { file in
             let fileurl = file.fileURL!.absoluteString
             ContentView(file: file.$document, fileurl: fileurl)
-                .frame(width: file.document.image_size!.width, height: file.document.image_size!.height, alignment: .center)
+//                .frame(width: file.document.image_size!.width, height: file.document.image_size!.height, alignment: .center)
+//                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                .frame(minWidth: file.document.image_size!.width, maxWidth: .infinity, minHeight: file.document.image_size!.height, maxHeight: .infinity, alignment: .center)
             // This should make the window resizeable, but for some reason it makes it always show up as a weird landscape size as well...
 //                .frame(minWidth: 320, idealWidth: file.document.image_size!.width , maxWidth: .infinity, minHeight: 320, idealHeight: file.document.image_size!.height, maxHeight: .infinity, alignment: .center)
 //                .frame(
@@ -226,8 +228,7 @@ struct ContentView: View {
     var body: some View {
         if (file.file_ext == "procreate") {
             ProcreateView(fileurl: fileurl, file: file, silica_doc: file.procreate_doc!, image_view_size: file.image_size!, show_meta: $show_meta, viewMode: $viewMode)
-//                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .frame(minWidth: file.image_size!.width, minHeight: file.image_size!.height)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .toolbar {
                     ToolbarItem(content: {
                         Button(action: {
@@ -538,6 +539,8 @@ struct ProspectImageView: NSViewRepresentable {
     
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = ImageViewer(fileurl: fileurl)
+//        let subviewFrame = CGRect(origin: .zero,
+//                                  size: CGSize(width: image_view_size.width, height: image_view_size.height))
         let subviewFrame = CGRect(origin: .zero,
                                   size: CGSize(width: image_view_size.width, height: image_view_size.height))
 
@@ -546,13 +549,15 @@ struct ProspectImageView: NSViewRepresentable {
 
 //        let scrollView = ImageViewer()
         scrollView.allowedTouchTypes = NSTouch.TouchTypeMask.indirect
+        scrollView.contentView = CenteredClip(frame: subviewFrame)
         scrollView.documentView = documentView
+        scrollView.contentView.constrainBoundsRect(NSRect(origin: .zero, size: subviewFrame.size))
         scrollView.contentView.scroll(to: CGPoint(x: 0, y: subviewFrame.size.height))
         scrollView.automaticallyAdjustsContentInsets = true
         scrollView.allowsMagnification = true
         scrollView.autohidesScrollers = true
         scrollView.scrollerStyle = .overlay
-//        scrollView.backgroundColor = .clear
+        
         scrollView.drawsBackground = false
         scrollView.horizontalScrollElasticity = .none
         scrollView.verticalScrollElasticity = .none
@@ -674,6 +679,7 @@ struct WindowObservationModifier: ViewModifier {
         content.background(
             HostingWindowFinder { [weak windowObserver] window in
                 windowObserver?.window = window
+                window?.setContentSize(NSSize(width: 0, height: 0)) //Hacky way of forcing the window to the correct width
             }
         ).environment(
             \.isKeyWindow,

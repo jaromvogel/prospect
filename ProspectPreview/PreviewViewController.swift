@@ -8,6 +8,7 @@
 import Cocoa
 import Quartz
 import ProcreateDocument
+//import Prospect
 
 public var si_doc:SilicaDocument?
 public var pro_url:URL?
@@ -61,6 +62,7 @@ class PreviewViewController: NSViewController, QLPreviewingController, QLPreview
         
         let documentView = NSView()
         documentView.wantsLayer = true
+        self.previewScrollView.contentView = CenteredClip(frame: CGRect(origin: .zero, size: CGSize(width: 0, height: 0)))
         self.previewScrollView.documentView = documentView
         
         self.previewScrollView.allowsMagnification = true
@@ -108,6 +110,7 @@ class PreviewViewController: NSViewController, QLPreviewingController, QLPreview
                 self.previewScrollView.documentView?.frame.size = preview_size
                 self.previewScrollView.documentView?.layer?.contentsGravity = .resizeAspect
                 self.previewScrollView.documentView?.layer?.contents = si_doc?.composite_image
+                self.previewScrollView.contentView.constrainBoundsRect(NSRect(origin: .zero, size: preview_size_w_title))
                 
                 // Call the completion handler so Quick Look knows that the preview is fully loaded.
                 // Quick Look will display a loading spinner while the completion handler is not called.

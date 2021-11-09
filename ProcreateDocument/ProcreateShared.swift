@@ -26,6 +26,8 @@ public func readSilicaBrush(file: FileWrapper) -> SilicaBrush {
 }
 
 
+// Height seems to be hard coded to 800 here?
+// Consider doing some math to intelligently fill the screen instead
 public func getImageSize(si_doc: SilicaDocument, height: Int = 800, minWidth: Int, maxWidth: Int) -> CGSize {
     var width = height
     var img_height = si_doc.size?.height

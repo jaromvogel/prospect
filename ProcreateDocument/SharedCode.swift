@@ -217,3 +217,19 @@ extension NSImage {
         return flippedImage
     }
 }
+
+// NSClipView override that centers the documentView inside a scrollView
+public class CenteredClip: NSClipView {
+    override public func constrainBoundsRect(_ proposedBounds: NSRect) -> NSRect {
+        var r:NSRect = super.constrainBoundsRect(proposedBounds)
+        let doc:NSRect = self.documentView!.frame
+        
+        if (proposedBounds.size.width > doc.size.width) {
+            r.origin.x = floor((doc.size.width - proposedBounds.size.width) / 2)
+        }
+        if (proposedBounds.size.height > doc.size.height) {
+            r.origin.y = floor((doc.size.height - proposedBounds.size.height) / 2)
+        }
+        return r
+    }
+}
