@@ -100,9 +100,7 @@ class PreviewViewController: NSViewController, QLPreviewingController, QLPreview
             let metadata: SilicaDocument? = getArchive(pro_file!)
             si_doc = metadata
 
-            let pro_file_2 = pro_file!
-            Task {
-                si_doc?.getComposite(pro_file_2)
+            si_doc?.getComposite(pro_file!, {
                 let preview_size = getImageSize(si_doc: si_doc!, height: 700, minWidth: 300, maxWidth: 1000)
                 let preview_size_w_title = CGSize(width: preview_size.width, height: preview_size.height)
                 super.preferredContentSize = preview_size_w_title
@@ -110,11 +108,12 @@ class PreviewViewController: NSViewController, QLPreviewingController, QLPreview
                 self.previewScrollView.documentView?.frame.size = preview_size
                 self.previewScrollView.documentView?.layer?.contentsGravity = .resizeAspect
                 self.previewScrollView.documentView?.layer?.contents = si_doc?.composite_image
-
+                
                 // Call the completion handler so Quick Look knows that the preview is fully loaded.
                 // Quick Look will display a loading spinner while the completion handler is not called.
                 handler(nil)
-            }
+            })
+
         } else if (ext == "swatches") {
             let swatches_thumb = getSwatchesImage(pro_file!)
             let swatches_size = CGSize(width: 600, height: 180)
