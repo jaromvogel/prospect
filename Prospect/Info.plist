@@ -62,14 +62,14 @@
 	<key>CFBundlePackageType</key>
 	<string>$(PRODUCT_BUNDLE_PACKAGE_TYPE)</string>
 	<key>CFBundleShortVersionString</key>
-	<string>0.9</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleVersion</key>
-	<string>0.9</string>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
-	<key>SUPublicEDKey</key>
-	<string>Cc8c6GN5GRZSA2NcCDPMzdyP7cVKIibjuPGv4u/HMWE=</string>
 	<key>SUFeedURL</key>
 	<string>https://jaromvogel.com/prospect/appcast.xml</string>
+	<key>SUPublicEDKey</key>
+	<string>Cc8c6GN5GRZSA2NcCDPMzdyP7cVKIibjuPGv4u/HMWE=</string>
 </dict>
 </plist>

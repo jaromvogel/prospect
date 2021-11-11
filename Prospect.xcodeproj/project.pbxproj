@@ -9,7 +9,6 @@
 /* Begin PBXBuildFile section */
 		7E1285FC264753CC008B669D /* BrushFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E1285FB264753CC008B669D /* BrushFile.swift */; };
 		7E19FB0026129BFB00813DA6 /* ProcreateShared.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8AB14DFB25E06C41009D8027 /* ProcreateShared.swift */; };
-		7E3E756E2550D7D500AC0775 /* Document.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E3E756D2550D7D500AC0775 /* Document.swift */; };
 		7E3E75702550D7D500AC0775 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E3E756F2550D7D500AC0775 /* ContentView.swift */; };
 		7E3E75722550D7D500AC0775 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7E3E75712550D7D500AC0775 /* Assets.xcassets */; };
 		7E3E75752550D7D500AC0775 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7E3E75742550D7D500AC0775 /* Preview Assets.xcassets */; };
@@ -126,7 +125,6 @@
 /* Begin PBXFileReference section */
 		7E1285FB264753CC008B669D /* BrushFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BrushFile.swift; sourceTree = "<group>"; };
 		7E3E75682550D7D500AC0775 /* Prospect.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Prospect.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		7E3E756D2550D7D500AC0775 /* Document.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Document.swift; sourceTree = "<group>"; };
 		7E3E756F2550D7D500AC0775 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		7E3E75712550D7D500AC0775 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		7E3E75742550D7D500AC0775 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
@@ -229,7 +227,6 @@
 		7E3E756A2550D7D500AC0775 /* Prospect */ = {
 			isa = PBXGroup;
 			children = (
-				7E3E756D2550D7D500AC0775 /* Document.swift */,
 				7E3E756F2550D7D500AC0775 /* ContentView.swift */,
 				7EFC3A72273B56A500364F73 /* AppDelegate.swift */,
 				7EB6601525E884BE00E4BB3D /* ExportController.swift */,
@@ -493,7 +490,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				7EFC3A73273B56A500364F73 /* AppDelegate.swift in Sources */,
-				7E3E756E2550D7D500AC0775 /* Document.swift in Sources */,
 				7E3E75702550D7D500AC0775 /* ContentView.swift in Sources */,
 				7EE58A412612B81500B616E3 /* SharedCode.swift in Sources */,
 				8A21FD2A25E7085C008F148C /* VisualEffectBlur.swift in Sources */,
@@ -698,6 +694,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"Prospect/Preview Content\"";
 				DEVELOPMENT_TEAM = 2R6RQYT69Y;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -708,6 +705,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MARKETING_VERSION = 0.9.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jaromvogel.Prospect;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Prospect/Prospect-Bridging-Header.h";
@@ -727,6 +725,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"Prospect/Preview Content\"";
 				DEVELOPMENT_TEAM = 2R6RQYT69Y;
 				ENABLE_HARDENED_RUNTIME = YES;
@@ -737,6 +736,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
+				MARKETING_VERSION = 0.9.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jaromvogel.Prospect;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Prospect/Prospect-Bridging-Header.h";
@@ -751,7 +751,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 0.9;
+				CURRENT_PROJECT_VERSION = 2;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = 2R6RQYT69Y;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -765,7 +765,7 @@
 					"@loader_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 0.9;
+				MARKETING_VERSION = 0.9.1;
 				ONLY_ACTIVE_ARCH = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jaromvogel.ProcreateDocument;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -784,7 +784,7 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 0.9;
+				CURRENT_PROJECT_VERSION = 2;
 				DEFINES_MODULE = YES;
 				DEVELOPMENT_TEAM = 2R6RQYT69Y;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -798,7 +798,7 @@
 					"@loader_path/Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 0.9;
+				MARKETING_VERSION = 0.9.1;
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jaromvogel.ProcreateDocument;
 				PRODUCT_NAME = "$(TARGET_NAME:c99extidentifier)";
@@ -816,7 +816,7 @@
 				CODE_SIGN_ENTITLEMENTS = ProspectThumb/ProspectThumb.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0.9;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 2R6RQYT69Y;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = ProspectThumb/Info.plist;
@@ -826,7 +826,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 0.9;
+				MARKETING_VERSION = 0.9.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jaromvogel.Prospect.ProspectThumb;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -840,7 +840,7 @@
 				CODE_SIGN_ENTITLEMENTS = ProspectThumb/ProspectThumb.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0.9;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 2R6RQYT69Y;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = ProspectThumb/Info.plist;
@@ -850,7 +850,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 0.9;
+				MARKETING_VERSION = 0.9.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jaromvogel.Prospect.ProspectThumb;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -865,7 +865,7 @@
 				CODE_SIGN_ENTITLEMENTS = ProspectPreview/ProspectPreview.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0.9;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 2R6RQYT69Y;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = ProspectPreview/Info.plist;
@@ -875,7 +875,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 0.9;
+				MARKETING_VERSION = 0.9.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jaromvogel.Prospect.ProspectPreview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
@@ -890,7 +890,7 @@
 				CODE_SIGN_ENTITLEMENTS = ProspectPreview/ProspectPreview.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0.9;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_TEAM = 2R6RQYT69Y;
 				ENABLE_HARDENED_RUNTIME = YES;
 				INFOPLIST_FILE = ProspectPreview/Info.plist;
@@ -900,7 +900,7 @@
 					"@executable_path/../../../../Frameworks",
 				);
 				MACOSX_DEPLOYMENT_TARGET = 11.0;
-				MARKETING_VERSION = 0.9;
+				MARKETING_VERSION = 0.9.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jaromvogel.Prospect.ProspectPreview;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;

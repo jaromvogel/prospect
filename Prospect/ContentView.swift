@@ -422,6 +422,8 @@ struct ProcreateView: View {
             if (value == 2) {
                 silica_doc.videoPlayer?.playImmediately(atRate: 1.0)
             } else if (value == 1) {
+                // make sure image is zoomed to fit
+                appState.zoomManager[fileurl]! = 1.0
                 silica_doc.videoPlayer?.pause()
             }
         })
