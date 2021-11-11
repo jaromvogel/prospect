@@ -18,6 +18,30 @@ public func getThumbOrientation(thumb_image: NSImage) -> String {
     return orientation
 }
 
+public func secondsToHoursAndMinutes(_ seconds: Float) -> String {
+    let converted_to_hours = seconds / 60 / 60
+    let hours = floor(converted_to_hours)
+    let minutes = floor((converted_to_hours - hours) * 60)
+    let timestring = String(Int(hours)).appending("h ").appending(String(Int(minutes))).appending("m")
+    return timestring
+}
+
+public func getVideoDuration(_ seconds: Double) -> String {
+    let converted_to_minutes = seconds / 60
+    let minutes = floor(converted_to_minutes)
+    let seconds = round((converted_to_minutes - minutes) * 60)
+    let timestring = String(Int(minutes)).appending("m ").appending(String(Int(seconds))).appending("s")
+    return String(timestring)
+}
+
+public func getVideoResolution(_ resString: String, _ videoEnabled: Bool) -> String {
+    var formatted = resString.replacingOccurrences(of: "pro50.vr", with: "")
+    if (videoEnabled == false) {
+        formatted = "N/A"
+    }
+    return formatted
+}
+
 
 public func getBrushPreviewSize(thumb_image: NSImage, orientation: String) -> CGSize {
     // Calculate size of thumb

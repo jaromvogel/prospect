@@ -20,6 +20,7 @@ public class SilicaDocument: NSObject, NSCoding, ObservableObject {
     public var composite:SilicaLayer?
 //  public var drawingguide
     public var faceBackgroundHidden:Bool?
+    public var featureSet:Int? = 1
     public var flippedHorizontally:Bool?
     public var flippedVertically:Bool?
     public var isFirstItemAnimationForeground:Bool?
@@ -42,6 +43,10 @@ public class SilicaDocument: NSObject, NSCoding, ObservableObject {
     public var solo: SilicaLayer?
     public var strokeCount: Int?
     public var tileSize: Int?
+    public var videoEnabled: Bool? = true
+    public var videoQualityKey: String?
+    public var videoResolutionKey: String?
+    public var videoDuration: String? = "Calculating..."
     
     
     public func encode(with coder: NSCoder) {
@@ -58,6 +63,7 @@ public class SilicaDocument: NSObject, NSCoding, ObservableObject {
         colorProfile = coder.decodeObject(forKey: "colorProfile") as! ValkyrieColorProfile?
         composite = coder.decodeObject(forKey: "composite") as! SilicaLayer?
         faceBackgroundHidden = coder.decodeBool(forKey: "faceBackgroundHidden")
+        featureSet = coder.decodeInteger(forKey: "featureSet")
         flippedHorizontally = coder.decodeBool(forKey: "flippedHorizontally")
         flippedVertically = coder.decodeBool(forKey: "flippedVertically")
         isFirstItemAnimationForeground = coder.decodeBool(forKey: "isFirstItemAnimationForeground")
@@ -78,6 +84,11 @@ public class SilicaDocument: NSObject, NSCoding, ObservableObject {
         solo = coder.decodeObject(forKey: "solo") as! SilicaLayer?
         strokeCount = coder.decodeObject(forKey: "strokeCount") as! Int?
         tileSize = coder.decodeInteger(forKey: "tileSize")
+        if (coder.containsValue(forKey: "videoEnabled") == true) {
+            videoEnabled = coder.decodeBool(forKey: "videoEnabled")
+        }
+        videoQualityKey = coder.decodeObject(forKey: "videoQualityKey") as! String?
+        videoResolutionKey = coder.decodeObject(forKey: "videoResolutionKey") as! String?
     }
     
     deinit {
@@ -96,6 +107,7 @@ public class SilicaDocument: NSObject, NSCoding, ObservableObject {
         self.colorProfile = nil
         self.composite = nil
         self.faceBackgroundHidden = nil
+        self.featureSet = nil
         self.flippedHorizontally = nil
         self.flippedVertically = nil
         self.isFirstItemAnimationForeground = nil
@@ -116,6 +128,10 @@ public class SilicaDocument: NSObject, NSCoding, ObservableObject {
         self.solo = nil
         self.strokeCount = nil
         self.tileSize = nil
+        self.videoEnabled = nil
+        self.videoQualityKey = nil
+        self.videoResolutionKey = nil
+        self.videoDuration = nil
     }
 }
 
@@ -242,7 +258,7 @@ public class ValkyrieColorProfile: NSObject, NSCoding {
     public func encode(with coder: NSCoder) {}
     
     public required init?(coder: NSCoder) {
-//        SiColorProfileArchiveICCDataKey = coder.decodeObject(forKey: "SiColorProfileArchiveICCDataKey") as! Data? //Not working?
+//        SiColorProfileArchiveICCDataKey = coder.decodeObject(forKey: "SiColorProfileArchiveICCDataKey") as! Data? //Not working because I'm trying to decode data as an object? Or something like that.
         SiColorProfileArchiveICCNameKey = coder.decodeObject(forKey: "SiColorProfileArchiveICCNameKey") as! String?
     }
     

@@ -10,11 +10,15 @@ import Cocoa
 import QuickLookThumbnailing
 import ZIPFoundation
 import AVFoundation
+import SwiftUI
 
 public func readProcreateDocument(file: FileWrapper) -> SilicaDocument {
     let silica_doc = getArchive(file)
 
     silica_doc?.getComposite(file)
+    DispatchQueue.global(qos: .userInitiated).async {
+        silica_doc?.getVideo(file: file)
+    }
     return silica_doc!
 }
 
@@ -88,6 +92,7 @@ public extension SilicaDocument {
         let fileManager = FileManager()
         
         let destinationURL = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask).first!.appendingPathComponent("prospectvideo")
+
         do {
             try? fileManager.removeItem(at: destinationURL)
             try fileManager.createDirectory(at: destinationURL, withIntermediateDirectories: true, attributes: nil)
@@ -97,17 +102,20 @@ public extension SilicaDocument {
         
         let archive = Archive(data: file.regularFileContents!, accessMode: .read, preferredEncoding: nil)
         
-        for entry in archive! {
+        let entry_list = archive!.filter({ entry in
+            return entry.path.contains("video") == true
+        })
+
+        for entry in entry_list {
             do {
-                if (entry.path.contains("video") == true) {
 // DEBUG MODE
-//                    _ = try archive!.extract(entry, to: destinationURL.appendingPathComponent(entry.path), skipCRC32: true)
-                    _ = try archive!.extract(entry, to: destinationURL.appendingPathComponent(entry.path), skipCRC32: false)
-                }
+//                _ = try archive!.extract(entry, to: destinationURL.appendingPathComponent(entry.path), skipCRC32: true)
+                _ = try archive!.extract(entry, to: destinationURL.appendingPathComponent(entry.path), skipCRC32: false)
             } catch {
                 print("didn't work")
             }
         }
+        
         
         var assetlist:Array<AVAsset> = []
         do {
@@ -143,8 +151,8 @@ public extension SilicaDocument {
         // Figure out if it's landscape, portrait, or square
         
         // Use orientation and sourceOrientation values to determine how to rotate the video
-        print("orientation = \(String(describing: self.orientation))")
-        print("sourceOrientation = \(String(describing: self.SilicaDocumentVideoSegmentInfoKey?.sourceOrientation))")
+//        print("orientation = \(String(describing: self.orientation))")
+//        print("sourceOrientation = \(String(describing: self.SilicaDocumentVideoSegmentInfoKey?.sourceOrientation))")
         
         for i in 0..<assetlist.count {
             let asset = assetlist[i]
@@ -184,8 +192,10 @@ public extension SilicaDocument {
         
         let playeritem = AVPlayerItem(asset: mixComposition)
         playeritem.videoComposition = mainComposition
-        self.videoPlayer = AVPlayer(playerItem: playeritem)
-        self.videoPlayer?.playImmediately(atRate: 1.0)
+        DispatchQueue.main.sync {
+            self.videoDuration = getVideoDuration(playeritem.duration.seconds)
+            self.videoPlayer = AVPlayer(playerItem: playeritem)
+        }
     }
 }
 

@@ -12,6 +12,7 @@ import ProcreateDocument
 import UniformTypeIdentifiers
 import AVFoundation
 import AVKit
+import Sparkle
 
 
 extension UTType {
@@ -88,6 +89,8 @@ struct ProcreateDocumentType: FileDocument {
 
 @main
 struct ContentApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
     var body: some Scene {
         DocumentScene()
     }
@@ -105,20 +108,7 @@ struct DocumentScene: Scene {
         DocumentGroup(viewing: ProcreateDocumentType.self) { file in
             let fileurl = file.fileURL!.absoluteString
             ContentView(file: file.$document, fileurl: fileurl)
-//                .frame(width: file.document.image_size!.width, height: file.document.image_size!.height, alignment: .center)
-//                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-                .frame(minWidth: file.document.image_size!.width, maxWidth: .infinity, minHeight: file.document.image_size!.height, maxHeight: .infinity, alignment: .center)
-            // This should make the window resizeable, but for some reason it makes it always show up as a weird landscape size as well...
-//                .frame(minWidth: 320, idealWidth: file.document.image_size!.width , maxWidth: .infinity, minHeight: 320, idealHeight: file.document.image_size!.height, maxHeight: .infinity, alignment: .center)
-//                .frame(
-//                    minWidth: file.document.image_size!.width,
-//                    idealWidth: file.document.image_size!.width,
-//                    maxWidth: .infinity,
-//                    minHeight: 100,
-//                    idealHeight: file.document.image_size!.height,
-//                    maxHeight: .infinity,
-//                    alignment: .center
-//                )
+            .frame(minWidth: file.document.image_size!.width, maxWidth: .infinity, minHeight: file.document.image_size!.height, maxHeight: .infinity, alignment: .center)
             .onAppear() {
                 state.zoomManager[fileurl] = 1.0
             }
@@ -186,6 +176,11 @@ struct DocumentScene: Scene {
         }
         .windowToolbarStyle(ExpandedWindowToolbarStyle())
         .commands {
+            CommandGroup(after: .appInfo, addition: {
+                Button("Check For Updates") {
+                    SUUpdater.shared()?.checkForUpdates(self)
+                }
+            })
             CommandGroup(replacing: CommandGroupPlacement.saveItem) {
                 Button("Export") {
                     exportCommand.send()
@@ -381,8 +376,8 @@ struct ProcreateView: View {
             }
 
             VStack() {
-//                Spacer()
-//                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                Spacer()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 GeometryReader() { geo in
                     HStack(alignment: .top, spacing: 20) {
                         VStack(alignment: .leading, spacing: 20) {
@@ -393,14 +388,21 @@ struct ProcreateView: View {
                             InfoCell(label: "DPI", value: String((silica_doc.SilicaDocumentArchiveDPIKey)!))
                         }
                         VStack(alignment: .leading, spacing: 20) {
-                            Button(action: {
-                                
-                                debugReloadImage()
-                                
-                            }, label: {
-                                Text("DEBUG refresh image")
-                            })
+                            InfoCell(label: "Color Profile", value: String((silica_doc.colorProfile?.SiColorProfileArchiveICCNameKey) ?? "sRGB"))
+                            InfoCell(label: "Video Length", value: silica_doc.videoDuration!)
+                            InfoCell(label: "Video Resolution", value: getVideoResolution(silica_doc.videoResolutionKey ?? "1080", silica_doc.videoEnabled!))
+                            InfoCell(label: "Total Strokes Made", value: String(silica_doc.strokeCount ?? 0))
+                            InfoCell(label: "Tracked Time", value: secondsToHoursAndMinutes(silica_doc.SilicaDocumentTrackedTimeKey!))
                         }
+//                        VStack(alignment: .leading, spacing: 20) {
+//                            Button(action: {
+//
+//                                debugReloadImage()
+//
+//                            }, label: {
+//                                Text("DEBUG refresh image")
+//                            })
+//                        }
                     }
                     .padding(20)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -417,8 +419,10 @@ struct ProcreateView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(VisualEffectBlur(material: .popover))
         .onChange(of: viewMode, perform: { value in
-            if (value == 2 && file.procreate_doc?.videoPlayer == nil) {
-                silica_doc.getVideo(file: file.wrapper!)
+            if (value == 2) {
+                silica_doc.videoPlayer?.playImmediately(atRate: 1.0)
+            } else if (value == 1) {
+                silica_doc.videoPlayer?.pause()
             }
         })
     }
@@ -643,8 +647,8 @@ class WindowObserver: ObservableObject {
     weak var window: NSWindow? {
         didSet {
             self.isKeyWindow = window?.isKeyWindow ?? false
-            window!.isOpaque = false
-            window!.backgroundColor = NSColor.init(red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0)
+//            window!.isOpaque = true
+//            window!.backgroundColor = NSColor.init(red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0)
             guard let window = window else {
                 self.becomeKeyobserver = nil
                 self.resignKeyobserver = nil

@@ -31,14 +31,18 @@ public extension SilicaDocument {
             differenceY = (rows * tileSize) - Int(size.height)
         }
         
-        let image_chunks:Array<chunkImage> = getLayerData((self.composite)!, columns, rows, differenceX, differenceY, file)
+        if ((self.featureSet != nil) && self.featureSet == 2) {
+            self.composite_image = getThumbImage(file: file, altpath: nil)
+        } else {
+            let image_chunks:Array<chunkImage> = getLayerData((self.composite)!, columns, rows, differenceX, differenceY, file)
 
-        var buffer_img:NSImage?
-        DispatchQueue.global(qos: .userInitiated).async {
-            buffer_img = decompressAndCompositeImages(file, self, image_chunks)
-            DispatchQueue.main.async {
-                self.composite_image = buffer_img
-                callback()
+            var buffer_img:NSImage?
+            DispatchQueue.global(qos: .userInitiated).async {
+                buffer_img = decompressAndCompositeImages(file, self, image_chunks)
+                DispatchQueue.main.async {
+                    self.composite_image = buffer_img
+                    callback()
+                }
             }
         }
     }
@@ -335,9 +339,11 @@ public func getArchive(_ file: FileWrapper) -> SilicaDocument? {
     do {
 //DEBUG MODE
 //        try _ = archive.extract(entry, bufferSize: UInt32(100000), skipCRC32: true, progress: nil, consumer: { (data) in
-        try _ = archive.extract(entry, bufferSize: UInt32(100000), skipCRC32: false, progress: nil, consumer: { (data) in
-            archive_data = readProcreateData(data: data)!
+        var data_buffer:Data = Data()
+        try _ = archive.extract(entry, bufferSize: UInt32(10000000), skipCRC32: false, progress: nil, consumer: { (data) in
+            data_buffer.append(data)
         })
+        archive_data = readProcreateData(data: data_buffer)!
     } catch {
         NSLog("\(error)")
     }

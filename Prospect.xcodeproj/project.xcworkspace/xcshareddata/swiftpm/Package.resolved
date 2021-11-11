@@ -2,6 +2,15 @@
   "object": {
     "pins": [
       {
+        "package": "Sparkle",
+        "repositoryURL": "https://github.com/sparkle-project/Sparkle",
+        "state": {
+          "branch": null,
+          "revision": "99dbdcbd96b80bbdf36ff02bf7f9f9cd7ed26f49",
+          "version": "1.27.0"
+        }
+      },
+      {
         "package": "ZIPFoundation",
         "repositoryURL": "https://github.com/weichsel/ZIPFoundation.git",
         "state": {
