@@ -12,39 +12,52 @@ import ZIPFoundation
 
 public extension SilicaDocument {
     
-    func getComposite(_ file: FileWrapper, _ callback: @escaping () -> Void = {}) {
-        
-        let size:CGSize = (self.size)!
-        let tileSize:Int = (self.tileSize)!
-        
-        // How many columns / rows of image chunks are in the file
-        let columns:Int = Int(ceil(size.width / CGFloat(tileSize)))
-        let rows:Int = Int(ceil(size.height / CGFloat(tileSize)))
-        
-        // For columns and rows that aren't multiples of tilesize, calculate how different they are
-        var differenceX:Int = 0
-        var differenceY:Int = 0
-        if Int(size.width) % tileSize != 0 {
-            differenceX = (columns * tileSize) - Int(size.width)
-        }
-        if Int(size.height) % tileSize != 0 {
-            differenceY = (rows * tileSize) - Int(size.height)
-        }
-        
-        if ((self.featureSet != nil) && self.featureSet == 2) {
-            self.composite_image = getThumbImage(file: file, altpath: nil)
+    func getLayer(_ layer: SilicaLayer?, _ file: FileWrapper, _ callback: @escaping () -> Void = {}) -> NSImage? {
+        if (layer == nil) {
+            if ((self.featureSet != nil) && self.featureSet == 2) {
+                self.composite_image = getThumbImage(file: file, altpath: nil)
+            }
         } else {
-            let image_chunks:Array<chunkImage> = getLayerData((self.composite)!, columns, rows, differenceX, differenceY, file)
-
+            var size:CGSize = (layer?.contentsRect!.size)!
+            if (layer!.UUID == self.composite!.UUID) { // resolves issue where a procreate file may not have generated its composite layer size yet
+                size = self.size!
+            }
+            let tileSize:Int = (self.tileSize)!
+            
+            // How many columns / rows of image chunks are in the file
+            let columns:Int = Int(ceil(self.size!.width / CGFloat(tileSize)))
+            let rows:Int = Int(ceil(self.size!.height / CGFloat(tileSize)))
+            
+            // For columns and rows that aren't multiples of tilesize, calculate how different they are
+            var differenceX:Int = 0
+            var differenceY:Int = 0
+            if Int(size.width) % tileSize != 0 {
+                differenceX = (columns * tileSize) - Int(layer!.document!.size!.width)
+            }
+            if Int(size.height) % tileSize != 0 {
+                differenceY = (rows * tileSize) - Int(layer!.document!.size!.height) //something is messing up here in certain circumstances
+            }
+            
+            let image_chunks:Array<chunkImage> = getLayerData(layer!, columns, rows, differenceX, differenceY, file)
             var buffer_img:NSImage?
-            DispatchQueue.global(qos: .userInitiated).async {
-                buffer_img = decompressAndCompositeImages(file, self, image_chunks)
-                DispatchQueue.main.async {
-                    self.composite_image = buffer_img
-                    callback()
+            
+            // If this is the composite layer:
+            if (layer!.UUID == self.composite!.UUID) {
+
+                DispatchQueue.global(qos: .userInitiated).async {
+                    buffer_img = decompressAndCompositeImages(file, layer!, self, image_chunks)
+                    DispatchQueue.main.async {
+                        self.composite_image = buffer_img
+                        callback()
+                    }
                 }
+            } else {
+                // Do something here to load non-composite layers
+                buffer_img = decompressAndCompositeImages(file, layer!, self, image_chunks)
+                return buffer_img
             }
         }
+        return nil
     }
     
     func getRotation() -> Double {
@@ -69,12 +82,6 @@ public extension SilicaDocument {
 
 
 /// BEGIN actually create the image
-func createImage(silicadoc: SilicaDocument, _ layer: SilicaLayer, _ columns: Int, _ rows: Int, _ differenceX: Int, _ differenceY: Int, _ file: FileWrapper) -> NSImage {
-    let image_chunks:Array<chunkImage> = getLayerData(layer, columns, rows, differenceX, differenceY, file)
-    let buffer_img = decompressAndCompositeImages(file, silicadoc, image_chunks)
-    
-    return buffer_img!
-}
 
 // Define an object we'll use to track data for each chunk
 private class chunkImage {
@@ -107,77 +114,91 @@ private class chunkImage {
 private func getLayerData(_ layer: SilicaLayer, _ columns: Int, _ rows: Int, _ differenceX: Int, _ differenceY: Int, _ file: FileWrapper) -> [chunkImage] {
     var layer_chunks:Array<chunkImage> = []
     
-    for column in 0..<columns {
-        for row in 0..<rows {
+    guard let archive = Archive(data: file.regularFileContents!, accessMode: .read) else {
+        print("couldn't read procreate archive")
+        return []
+    }
+    
+    let layer_dir = layer.UUID!.appending("/")
+    let entries = archive.filter { $0.path.starts(with: layer_dir) }
+    
+    entries.forEach({ entry in
+        autoreleasepool {
+            let filepath = entry.path(using: .utf8)
+            let filename = filepath.replacingOccurrences(of: layer_dir, with: "").replacingOccurrences(of: ".chunk", with: "")
+            let column = Int(filename.split(separator: "~")[0])!
+            let row = Int(filename.split(separator: "~")[1])!
+            
             var chunk_tilesize:CGSize = CGSize(width: (layer.document?.tileSize)!, height: (layer.document?.tileSize)!)
             
-            let filename = String(column) + "~" + String(row) + ".chunk"
-            
-            // Account for columns or rows that are too short
             if (column + 1 == columns) {
                 chunk_tilesize.width = chunk_tilesize.width - CGFloat(differenceX)
             }
             if (row + 1 == rows) {
                 chunk_tilesize.height = chunk_tilesize.height - CGFloat(differenceY)
             }
-            
-            let filepath = layer.UUID!.appending("/" + filename)
-            
             let chunk:chunkImage = chunkImage(row, column, chunk_tilesize, filename, filepath, layer.document?.colorProfile?.SiColorProfileArchiveICCNameKey ?? nil)
-            
+
             layer_chunks.append(chunk)
         }
-    }
+    })
     
     return layer_chunks
 }
 
 /// Composite image chunks into full layer image
-private func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: SilicaDocument, _ chunks: Array<chunkImage>) -> NSImage? {
+private func decompressAndCompositeImages(_ file: FileWrapper, _ layer: SilicaLayer, _ metadata: SilicaDocument, _ chunks: Array<chunkImage>) -> NSImage? {
 
     var counter:CGFloat = 0
     
-    var comp_image = NSImage(size: (metadata.size)!, actions: { ctx in
+    var layer_image = NSImage(size: (metadata.size)!, actions: { ctx in
         
         ctx.interpolationQuality = .none // avoid weird resampling stuff that makes the image look blurry
         DispatchQueue.global(qos: .userInteractive).sync {
             DispatchQueue.concurrentPerform(iterations: chunks.count, execute: { index in
-                decompressChunk(file, chunk: chunks[index])
-                
-                let image = chunks[index].image!
-                let flipped = image.flipVertically()
-                chunks[index].image = flipped
-                
-                DispatchQueue.main.sync {
-                    // keep track of how many chunks have been read and update the progress bar
+                autoreleasepool {
+                    decompressChunk(file, chunk: chunks[index])
+                    
+                    let image = chunks[index].image!
+                    let flipped = image.flipVertically()
+                    chunks[index].image = flipped
+                    
+                    // keep track of how many chunks have been read
                     counter += 1
-                    metadata.comp_load = counter / CGFloat(chunks.count)
-                    metadata.objectWillChange.send()
+                    if (layer.UUID == metadata.composite!.UUID) {
+                        DispatchQueue.main.sync {
+                            // update the progress bar
+                            metadata.comp_load = counter / CGFloat(chunks.count)
+                            metadata.objectWillChange.send()
+                        }
+                    }
                 }
             })
             assert(Int(counter) == chunks.count, "not all chunks are loaded!")
             for chunk in chunks {
-                // Draw all chunk images into the context
-                // I think this is the part that was causing the weird misplaced image chunks before when context drawing was happening in a multithreaded environment, but we'll see I guess
-                ctx.draw(chunk.image!.cgImage(forProposedRect: nil, context: nil, hints: nil)!, in: chunk.rect!)
+                autoreleasepool {
+                    // Draw all chunk images into the context
+                    // I think this is the part that was causing the weird misplaced image chunks before when context drawing was happening in a multithreaded environment, but we'll see I guess
+                    ctx.draw(chunk.image!.cgImage(forProposedRect: nil, context: nil, hints: nil)!, in: chunk.rect!)
+                }
             }
         }
     
     })
     
-    comp_image = comp_image.rotated(by: CGFloat(metadata.getRotation()) * -1)
+    layer_image = layer_image.rotated(by: CGFloat(metadata.getRotation()) * -1)
     if (metadata.flippedVertically == true) {
-        comp_image = comp_image.flipVertically()
+        layer_image = layer_image.flipVertically()
     }
     if (metadata.flippedHorizontally == true) {
-        comp_image = comp_image.flipHorizontally()
+        layer_image = layer_image.flipHorizontally()
     }
 
 //        assert(Int(counter) == chunks.count, "chunks not finished loading!")
     
     /// Correct image color and size here before returning
     let colorProfile:String? = metadata.colorProfile?.SiColorProfileArchiveICCNameKey
-    var rep = unscaledBitmapImageRep(forImage: comp_image, colorProfile: colorProfile ?? "sRGB IEC61966-2.1") // default to sRGB if the file doesn't have a specific color profile
+    var rep = unscaledBitmapImageRep(forImage: layer_image, colorProfile: colorProfile ?? "sRGB IEC61966-2.1") // default to sRGB if the file doesn't have a specific color profile
 
     if (colorProfile == "sRGB IEC61966-2.1") {
         rep = rep.retagging(with: NSColorSpace.extendedSRGB)!
@@ -190,18 +211,20 @@ private func decompressAndCompositeImages(_ file: FileWrapper, _ metadata: Silic
     guard let data = rep.representation(using: .tiff, properties:[.compressionFactor: 1.0]) else {
         preconditionFailure()
     }
-    let comp_image_color_corrected = NSImage(data: data)
+    let layer_image_color_corrected = NSImage(data: data)
     
-    return comp_image_color_corrected
+    return layer_image_color_corrected
 }
 
 // unarchive the data from the chunk file, but don't do anything else yet
 private func decompressChunk(_ file: FileWrapper, chunk: chunkImage) {
     
     guard let archive = Archive(data: file.regularFileContents!, accessMode: .read) else {
+        print("couldn't read procreate archive")
         return
     }
     guard let entry = archive[chunk.filepath!] else {
+        print("chunk archive entry at \(chunk.filepath!) doesn't exist")
         return
     }
 
@@ -234,7 +257,7 @@ private func readChunkData(_ chunk: chunkImage) {
     let src_len:lzo_uint = lzo_uint(chunk.data!.count)
     
     // Calculate the final bite size of the decompressed image chunk
-    let finalsize:Int = Int(chunk.tileSize!.width * chunk.tileSize!.height * 4)
+    let finalsize:Int = abs(Int(chunk.tileSize!.width * chunk.tileSize!.height * 4))
     
     let dst:UnsafeMutablePointer<UInt8> = UnsafeMutablePointer<UInt8>.allocate(capacity: finalsize)
     dst.initialize(repeating: 0, count: finalsize)

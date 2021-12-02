@@ -15,9 +15,11 @@ import SwiftUI
 public func readProcreateDocument(file: FileWrapper) -> SilicaDocument {
     let silica_doc = getArchive(file)
 
-    silica_doc?.getComposite(file)
+    let _ = silica_doc?.getLayer(silica_doc!.composite, file)
     DispatchQueue.global(qos: .userInitiated).async {
-        silica_doc?.getVideo(file: file)
+        if (silica_doc?.featureSet != nil && silica_doc?.featureSet == 1) {
+            silica_doc?.getVideo(file: file)
+        }
     }
     return silica_doc!
 }
@@ -112,7 +114,7 @@ public extension SilicaDocument {
 //                _ = try archive!.extract(entry, to: destinationURL.appendingPathComponent(entry.path), skipCRC32: true)
                 _ = try archive!.extract(entry, to: destinationURL.appendingPathComponent(entry.path), skipCRC32: false)
             } catch {
-                print("didn't work")
+                print("video segment extraction didn't work")
             }
         }
         
@@ -187,6 +189,10 @@ public extension SilicaDocument {
         mainComposition.instructions = [mainInstruction]
         mainComposition.frameDuration = CMTimeMake(value: 1, timescale: 30)
         mainComposition.renderSize = mixComposition.tracks[0].naturalSize
+        if (mainComposition.renderSize.width == 0.0 || mainComposition.renderSize.height == 0.0) {
+            // band-aid to fix issue where time-lapse video may not yet exist
+            mainComposition.renderSize = CGSize(width: 1.0, height: 1.0)
+        }
         // Do this if video is rotated 90°, but not if it's rotated 180°
 //        mainComposition.renderSize = CGSize(width: (track?.naturalSize.height)!, height: (track?.naturalSize.width)!)
         

@@ -145,7 +145,7 @@ public class SilicaLayer: NSObject, NSCoding {
     public var bundledMaskPath:String?
     public var bundledVideoPath:String?
     public var clipped:Bool?
-    public var contentsRect:Data?
+    public var contentsRect:NSRect?
     public var contentsRectValid:Bool?
     public var document:SilicaDocument?
     public var extendedBlend:Int?
@@ -174,7 +174,8 @@ public class SilicaLayer: NSObject, NSCoding {
         bundledMaskPath = coder.decodeObject(forKey: "bundledMaskPath") as! String?
         bundledVideoPath = coder.decodeObject(forKey: "bundledVideoPath") as! String?
         clipped = coder.decodeBool(forKey: "clipped")
-        contentsRect = coder.decodeObject(forKey: "contentsRect") as! Data?
+        let contentsRectData = coder.decodeObject(forKey: "contentsRect") as AnyObject
+        contentsRect = contentsRectData.bytes!.load(as: NSRect.self) // Messy, but it seems to work!
         contentsRectValid = coder.decodeBool(forKey: "contentsRectValid")
         document = coder.decodeObject(forKey: "document") as! SilicaDocument?
         extendedBlend = coder.decodeInteger(forKey: "extendedBlend")
