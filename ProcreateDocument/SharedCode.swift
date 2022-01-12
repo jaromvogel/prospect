@@ -112,12 +112,18 @@ public func getSwatchesImage(_ file: FileWrapper) -> NSImage {
                 let swatch_pos = getSwatchPosition(swatch_index)
                 let swatch_rect = CGRect(origin: swatch_pos, size: CGSize(width: 60, height: 60))
                 if (swatch != nil) {
-                    let icc = swatches_meta.colorProfiles[swatch!.colorSpace].iccData
-                    let icc_data = NSData(base64Encoded: icc, options: .ignoreUnknownCharacters)
-                    let colorSpace:NSColorSpace = NSColorSpace.init(iccProfileData: icc_data! as Data)!
-                    let swatch_color = NSColor(colorSpace: colorSpace, hue: swatch!.hue, saturation: swatch!.saturation, brightness: swatch!.brightness, alpha: 1.0)
-                    ctx.setFillColor(swatch_color.cgColor)
-                    ctx.fill(swatch_rect)
+
+                    swatches_meta.colorProfiles.forEach({ profile in
+                        if (profile.colorSpace == swatch!.colorSpace) {
+                            let icc = profile.iccData
+                            let icc_data = NSData(base64Encoded: icc, options: .ignoreUnknownCharacters)
+                            let colorSpace:NSColorSpace = NSColorSpace.init(iccProfileData: icc_data! as Data)!
+                            let swatch_color = NSColor(colorSpace: colorSpace, hue: swatch!.hue, saturation: swatch!.saturation, brightness: swatch!.brightness, alpha: 1.0)
+                            ctx.setFillColor(swatch_color.cgColor)
+                            ctx.fill(swatch_rect)
+                        }
+                    })
+
                 } else {
                     let swatch_color = NSColor(colorSpace: .displayP3, hue: 0.0, saturation: 0.0, brightness: 0.0, alpha: 0.0)
                     ctx.setFillColor(swatch_color.cgColor)

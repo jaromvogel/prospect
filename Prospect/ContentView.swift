@@ -98,6 +98,7 @@ struct ContentApp: App {
 
 struct DocumentScene: Scene {
     private let exportCommand = PassthroughSubject<Void, Never>()
+    private let exportLayersCommand = PassthroughSubject<Void, Never>()
     private let copyCommand = PassthroughSubject<Void, Never>()
     private let zoomInCommand = PassthroughSubject<Void, Never>()
     private let zoomOutCommand = PassthroughSubject<Void, Never>()
@@ -138,6 +139,37 @@ struct DocumentScene: Scene {
                     }
                     exportController(exportImage: exportImage, filename: exportFilename ?? "Unknown").presentDialog(nil)
                 }
+            }
+            .onReceive(exportLayersCommand) { _ in
+                // Using a foreach loop with autoreleasepool instead of concurrentperform is easier on RAM, but quite a bit slower
+                DispatchQueue.concurrentPerform(iterations: file.document.procreate_doc!.layers!.count, execute: { index in
+                    autoreleasepool {
+                        let layer = file.document.procreate_doc!.layers![index]
+                        var layer_img = file.document.procreate_doc!.getLayer(layer, file.document.wrapper!)
+                        if (layer_img != nil) {
+                            // write each layer to disk, then clear it from memory
+                            let fileUrl = FileManager.default.temporaryDirectory.appendingPathComponent("com.jaromvogel.prospect")
+                            do {
+        //                        try? FileManager.default.removeItem(at: fileUrl)
+                                try FileManager.default.createDirectory(at: fileUrl, withIntermediateDirectories: true, attributes: nil)
+                            } catch {
+                                print("couldn't create the directory :(")
+                            }
+                            
+                            let layernumber = file.document.procreate_doc!.layers!.firstIndex(of: layer)
+                            let filename = String(layernumber!).appending("_").appending("_").appending(layer.name!)
+                            if layer_img!.save(as: filename, fileType: .tiff, at: fileUrl) {
+                                // Do something here when saving to disk is done
+                                // Maybe export to PSD somehow??
+                                print("\(String(describing: layer.name!)) saved at \(String(describing: fileUrl))")
+                            }
+
+                        } else {
+                            print("layer not loaded!")
+                        }
+                        layer_img = nil
+                    }
+                })
             }
             .onReceive(copyCommand) { _ in
                 if (fileurl == state.activeurl) {
@@ -185,6 +217,9 @@ struct DocumentScene: Scene {
                 Button("Export") {
                     exportCommand.send()
                 }.keyboardShortcut("e")
+                Button("Export PNG Layers") {
+                    exportLayersCommand.send()
+                }.keyboardShortcut("e", modifiers: .option)
                 Divider()
                 Button("Close") {
                     NSApplication.shared.keyWindow?.close()
@@ -331,33 +366,33 @@ struct ProcreateView: View {
         //        debug something here
         print("DEBUG")
 
-        // Using a foreach loop with autoreleasepool instead of concurrentperform is easier on RAM, but quite a bit slower
-        DispatchQueue.concurrentPerform(iterations: silica_doc.layers!.count, execute: { index in
-            autoreleasepool {
-                let layer = silica_doc.layers![index]
-                var layer_img = silica_doc.getLayer(layer, file.wrapper!)
-                if (layer_img != nil) {
-                    // write each layer to disk, then clear it from memory
-                    let fileUrl = FileManager.default.temporaryDirectory.appendingPathComponent("com.jaromvogel.prospect")
-                    do {
-//                        try? FileManager.default.removeItem(at: fileUrl)
-                        try FileManager.default.createDirectory(at: fileUrl, withIntermediateDirectories: true, attributes: nil)
-                    } catch {
-                        print("couldn't create the directory :(")
-                    }
-                    
-                    if layer_img!.save(as: layer.UUID!, fileType: .tiff, at: fileUrl) {
-                        // Do something here when saving to disk is done
-                        // Maybe export to PSD somehow??
-                        print("\(String(describing: layer.name!)) saved at \(String(describing: fileUrl))")
-                    }
-
-                } else {
-                    print("layer not loaded!")
-                }
-                layer_img = nil
-            }
-        })
+//        // Using a foreach loop with autoreleasepool instead of concurrentperform is easier on RAM, but quite a bit slower
+//        DispatchQueue.concurrentPerform(iterations: silica_doc.layers!.count, execute: { index in
+//            autoreleasepool {
+//                let layer = silica_doc.layers![index]
+//                var layer_img = silica_doc.getLayer(layer, file.wrapper!)
+//                if (layer_img != nil) {
+//                    // write each layer to disk, then clear it from memory
+//                    let fileUrl = FileManager.default.temporaryDirectory.appendingPathComponent("com.jaromvogel.prospect")
+//                    do {
+////                        try? FileManager.default.removeItem(at: fileUrl)
+//                        try FileManager.default.createDirectory(at: fileUrl, withIntermediateDirectories: true, attributes: nil)
+//                    } catch {
+//                        print("couldn't create the directory :(")
+//                    }
+//
+//                    if layer_img!.save(as: layer.UUID!, fileType: .tiff, at: fileUrl) {
+//                        // Do something here when saving to disk is done
+//                        // Maybe export to PSD somehow??
+//                        print("\(String(describing: layer.name!)) saved at \(String(describing: fileUrl))")
+//                    }
+//
+//                } else {
+//                    print("layer not loaded!")
+//                }
+//                layer_img = nil
+//            }
+//        })
     }
     
     var body: some View {
