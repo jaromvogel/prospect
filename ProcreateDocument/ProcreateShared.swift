@@ -17,7 +17,7 @@ public func readProcreateDocument(file: FileWrapper) -> SilicaDocument {
 
     let _ = silica_doc?.getLayer(silica_doc!.composite, file)
     DispatchQueue.global(qos: .userInitiated).async {
-        if (silica_doc?.featureSet != nil && silica_doc?.featureSet == 1) {
+        if (silica_doc?.videoEnabled == true) {
             silica_doc?.getVideo(file: file)
         }
     }

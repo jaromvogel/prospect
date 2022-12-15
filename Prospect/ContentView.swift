@@ -217,9 +217,9 @@ struct DocumentScene: Scene {
                 Button("Export") {
                     exportCommand.send()
                 }.keyboardShortcut("e")
-                Button("Export PNG Layers") {
-                    exportLayersCommand.send()
-                }.keyboardShortcut("e", modifiers: .option)
+//                Button("Export PNG Layers") {
+//                    exportLayersCommand.send()
+//                }.keyboardShortcut("e", modifiers: .option)
                 Divider()
                 Button("Close") {
                     NSApplication.shared.keyWindow?.close()
@@ -412,25 +412,31 @@ struct ProcreateView: View {
                 }
             } else if (viewMode == 2) {
                 ZStack() {
-                    if (file.procreate_doc?.videoPlayer == nil) {
-                        Text("loading...")
-                            .foregroundColor(Color.white)
+                    if (file.procreate_doc?.videoEnabled == false) {
+                        Text("Time-lapse Disabled")
+                            .foregroundColor(Color.secondary)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
-                        VideoPlayer(player: file.procreate_doc?.videoPlayer)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                            .onTapGesture {
-                                self.show_meta = false
-                            }
-                    }
-                    if (state.exportingTL[fileurl] == true) {
-                        VStack() {
-                            ProgressView(value: state.exportProgress[fileurl])
-                                .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
+                        if (file.procreate_doc?.videoPlayer == nil) {
+                            Text("loading...")
+                                .foregroundColor(Color.secondary)
                                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        } else {
+                            VideoPlayer(player: file.procreate_doc?.videoPlayer)
+                                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                                .onTapGesture {
+                                    self.show_meta = false
+                                }
                         }
-                        .background(VisualEffectBlur(material: .popover))
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        if (state.exportingTL[fileurl] == true) {
+                            VStack() {
+                                ProgressView(value: state.exportProgress[fileurl])
+                                    .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
+                                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            }
+                            .background(VisualEffectBlur(material: .popover))
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        }
                     }
                 }
             }
