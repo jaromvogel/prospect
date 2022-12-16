@@ -96,14 +96,16 @@ private class chunkImage {
     var x_pos: CGFloat?
     var y_pos: CGFloat?
     var rect: CGRect?
+    var lz4_compression: Bool?
     
-    init(_ row: Int, _ column: Int, _ tileSize: CGSize, _ filename: String, _ filepath: String, _ colorSpace: String?) {
+    init(_ row: Int, _ column: Int, _ tileSize: CGSize, _ filename: String, _ filepath: String, _ colorSpace: String?, _ lz4_compression: Bool?) {
         self.row = row
         self.column = column
         self.tileSize = tileSize
         self.filename = filename
         self.filepath = filepath
         self.colorSpace = colorSpace
+        self.lz4_compression = lz4_compression
         self.x_pos = CGFloat(256 * CGFloat(self.column!))
         self.y_pos = CGFloat(256 * CGFloat(self.row!))
         self.rect = CGRect(x: self.x_pos!, y: self.y_pos!, width: self.tileSize!.width, height: self.tileSize!.height)
@@ -124,8 +126,12 @@ private func getLayerData(_ layer: SilicaLayer, _ columns: Int, _ rows: Int, _ d
     
     entries.forEach({ entry in
         autoreleasepool {
+            var lz4_compression:Bool = false
             let filepath = entry.path(using: .utf8)
-            let filename = filepath.replacingOccurrences(of: layer_dir, with: "").replacingOccurrences(of: ".chunk", with: "")
+            if (filepath.contains(".lz4")) {
+                lz4_compression = true
+            }
+            let filename = filepath.replacingOccurrences(of: layer_dir, with: "").replacingOccurrences(of: ".chunk", with: "").replacingOccurrences(of: ".lz4", with: "")
             let column = Int(filename.split(separator: "~")[0])!
             let row = Int(filename.split(separator: "~")[1])!
             
@@ -137,7 +143,7 @@ private func getLayerData(_ layer: SilicaLayer, _ columns: Int, _ rows: Int, _ d
             if (row + 1 == rows) {
                 chunk_tilesize.height = chunk_tilesize.height - CGFloat(differenceY)
             }
-            let chunk:chunkImage = chunkImage(row, column, chunk_tilesize, filename, filepath, layer.document?.colorProfile?.SiColorProfileArchiveICCNameKey ?? nil)
+            let chunk:chunkImage = chunkImage(row, column, chunk_tilesize, filename, filepath, layer.document?.colorProfile?.SiColorProfileArchiveICCNameKey ?? nil, lz4_compression)
 
             layer_chunks.append(chunk)
         }
@@ -235,7 +241,11 @@ private func decompressChunk(_ file: FileWrapper, chunk: chunkImage) {
         try _ = archive.extract(entry, bufferSize: UInt32(100000), skipCRC32: false, consumer: { (data) in
             chunk.data?.append(data)
         })
-        readChunkData(chunk)
+        if (chunk.lz4_compression == false) {
+            readChunkData(chunk)
+        } else {
+            readChunkLZ4Data(chunk)
+        }
     } catch {
         NSLog("\(error)")
     }
@@ -285,6 +295,21 @@ private func readChunkData(_ chunk: chunkImage) {
     }
 }
 
+private func readChunkLZ4Data(_ chunk: chunkImage) {
+    do {
+        let decompData = try (chunk.data! as NSData).decompressed(using: .lz4)
+
+        let pixels = decompData.bytes.assumingMemoryBound(to: UInt8.self)
+        
+        let chunk_image:NSImage = imageFromPixels(size: chunk.tileSize!, pixels: pixels, width: Int(chunk.tileSize!.width), height: Int(chunk.tileSize!.height), colorSpace: chunk.colorSpace)
+        
+        chunk.image = chunk_image
+    } catch {
+        debugPrint(error.localizedDescription)
+    }
+}
+
+
 // Create the an actual image from the chunk's pixel data
 private func imageFromPixels(size: NSSize, pixels: UnsafePointer<UInt8>, width: Int, height: Int, colorSpace: String?) -> NSImage {
     let imageColorSpace = CGColorSpace(name: CGColorSpace.sRGB)
@@ -312,6 +337,8 @@ private func imageFromPixels(size: NSSize, pixels: UnsafePointer<UInt8>, width: 
     )
     return NSImage(cgImage: cgim!, size: size)
 }
+
+
 
 /// Code to deal with scaling the export image and retina resolution
 /// Also handles part of colorspace logic
