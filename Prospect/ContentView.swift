@@ -534,7 +534,7 @@ struct BrushView: View {
                         .foregroundColor(colorScheme == .dark ? .black : .white)
                         .opacity(0.5)
                 )
-            Text(brush.name!)
+            Text(brush.name ?? "Untitled Brush")
                 .font(.system(size: 14.0).weight(.bold))
                 .foregroundColor(Color(colorScheme == .dark ? CGColor.init(gray: 0.7, alpha: 1.0) : CGColor.init(gray: 0.2, alpha: 1.0)))
                 .padding(.horizontal, 14)
