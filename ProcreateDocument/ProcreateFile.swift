@@ -5,7 +5,12 @@ import AVFoundation
 
 // Silica Document
 @objc(SilicaDocument)
-public class SilicaDocument: NSObject, NSCoding, ObservableObject {
+public class SilicaDocument: NSObject, NSSecureCoding, ObservableObject {
+    public static var supportsSecureCoding: Bool {
+        return true
+    }
+    
+    
     @Published public var composite_image:NSImage?
     @Published public var videoPlayer:AVPlayer?
     public var comp_load:CGFloat = 0.0
@@ -20,7 +25,7 @@ public class SilicaDocument: NSObject, NSCoding, ObservableObject {
     public var composite:SilicaLayer?
 //  public var drawingguide
     public var faceBackgroundHidden:Bool?
-    public var featureSet:Int? = 1
+    public var featureSet:Int? = 1 // I _think_ 1 means regular 2D drawing and 2 means 3D canvas, but there might be other cases I'm not considering
     public var flippedHorizontally:Bool?
     public var flippedVertically:Bool?
     public var isFirstItemAnimationForeground:Bool?
@@ -138,7 +143,11 @@ public class SilicaDocument: NSObject, NSCoding, ObservableObject {
 
 // Silica Layer
 @objc(SilicaLayer)
-public class SilicaLayer: NSObject, NSCoding {
+public class SilicaLayer: NSObject, NSSecureCoding {
+    public static var supportsSecureCoding: Bool {
+        return true
+    }
+    
     public var animationHeldLength:Int?
     public var blend:Int?
     public var bundledImagePath:String?
@@ -200,7 +209,11 @@ public class SilicaLayer: NSObject, NSCoding {
 
 // Silica Group
 @objc(SilicaGroup)
-public class SilicaGroup: NSObject, NSCoding {
+public class SilicaGroup: NSObject, NSSecureCoding {
+    public static var supportsSecureCoding: Bool {
+        return true
+    }
+    
     public var children:[SilicaLayer]?
     public var document:SilicaDocument?
     public var isCollapsed:Bool?
@@ -225,7 +238,11 @@ public class SilicaGroup: NSObject, NSCoding {
 
 // Valkyrie Document Animation
 @objc(ValkyrieDocumentAnimation)
-public class ValkyrieDocumentAnimation: NSObject, NSCoding {
+public class ValkyrieDocumentAnimation: NSObject, NSSecureCoding {
+    public static var supportsSecureCoding: Bool {
+        return true
+    }
+    
     public var coloredSkins:Bool?
     public var enabled:Bool?
     public var frameRate:Int?
@@ -252,7 +269,11 @@ public class ValkyrieDocumentAnimation: NSObject, NSCoding {
 
 // Valkyrie Color Profile
 @objc(ValkyrieColorProfile)
-public class ValkyrieColorProfile: NSObject, NSCoding {
+public class ValkyrieColorProfile: NSObject, NSSecureCoding {
+    public static var supportsSecureCoding: Bool {
+        return true
+    }
+    
     public var SiColorProfileArchiveICCDataKey:Data?
     public var SiColorProfileArchiveICCNameKey:String?
     
@@ -268,7 +289,11 @@ public class ValkyrieColorProfile: NSObject, NSCoding {
 
 // Valkyrie Text
 @objc(ValkyrieText)
-public class ValkyrieText: NSObject, NSCoding {
+public class ValkyrieText: NSObject, NSSecureCoding {
+    public static var supportsSecureCoding: Bool {
+        return true
+    }
+    
     // Come back to this...
     
     public func encode(with coder: NSCoder) {}
@@ -281,7 +306,11 @@ public class ValkyrieText: NSObject, NSCoding {
 
 // Video Segment Info
 @objc(VideoSegmentInfo)
-public class VideoSegmentInfo: NSObject, NSCoding {
+public class VideoSegmentInfo: NSObject, NSSecureCoding {
+    public static var supportsSecureCoding: Bool {
+        return true
+    }
+    
     public var bitrate: NSNumber?
     public var codec: Int?
     public var codec2020: Int?

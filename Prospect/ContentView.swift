@@ -257,68 +257,72 @@ struct ContentView: View {
     
     var body: some View {
         if (file.file_ext == "procreate") {
-            ProcreateView(fileurl: fileurl, file: file, silica_doc: file.procreate_doc!, image_view_size: file.image_size!, show_meta: $show_meta, viewMode: $viewMode)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .toolbar {
-                    ToolbarItem(content: {
-                        Button(action: {
-                            show_meta.toggle()
-                        }) {
-                            Label("Info", systemImage: "info.circle")
-                        }
-                        .keyboardShortcut("i", modifiers: .command)
-                    })
-                    ToolbarItemGroup(placement: ToolbarItemPlacement.principal, content: {
-                        Spacer()
-                        Picker("View", selection: $viewMode) {
-                            Text("Artwork").tag(1)
-                            Text("Timelapse").tag(2)
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                        Spacer()
-                    })
-                    ToolbarItemGroup(content: {
-                        Spacer()
-                        if (viewMode == 1) {
+            if (file.procreate_doc?.featureSet == nil || file.procreate_doc?.featureSet == 1) {
+                ProcreateView(fileurl: fileurl, file: file, silica_doc: file.procreate_doc!, image_view_size: file.image_size!, show_meta: $show_meta, viewMode: $viewMode)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .toolbar {
+                        ToolbarItem(content: {
                             Button(action: {
-                                // zoom out
-                                if (state.zoomManager[fileurl]! > 1.0) {
-                                    state.zoomManager[fileurl]! -= 0.5
-                                }
+                                show_meta.toggle()
                             }) {
-                                Label("Zoom out", systemImage: "minus.magnifyingglass")
+                                Label("Info", systemImage: "info.circle")
                             }
-                            .keyboardShortcut("-", modifiers: .command)
-                            Button(action: {
-                                // zoom in
-                                if (state.zoomManager[fileurl]! < 100.0) {
-                                    state.zoomManager[fileurl]! += 0.5
-                                }
-                            }) {
-                                Label("Zoom in", systemImage: "plus.magnifyingglass")
+                            .keyboardShortcut("i", modifiers: .command)
+                        })
+                        ToolbarItemGroup(placement: ToolbarItemPlacement.principal, content: {
+                            Spacer()
+                            Picker("View", selection: $viewMode) {
+                                Text("Artwork").tag(1)
+                                Text("Timelapse").tag(2)
                             }
-                            .keyboardShortcut("=", modifiers: .command)
-                        }
-                        Button(action: {
-                            // Export
-                            let exportFilename:String = file.procreate_doc!.name ?? "Untitled Artwork"
+                            .pickerStyle(SegmentedPickerStyle())
+                            Spacer()
+                        })
+                        ToolbarItemGroup(content: {
+                            Spacer()
                             if (viewMode == 1) {
-                                let exportImage:NSImage = file.procreate_doc!.composite_image!
-                                exportController(exportImage: exportImage, filename: exportFilename).presentDialog(nil)
-                            } else if (viewMode == 2) {
-                                exportController(exportImage: nil, isTimelapse: true, TLPlayer: file.procreate_doc?.videoPlayer, filename: exportFilename, fileurl: fileurl).presentDialog(nil)
+                                Button(action: {
+                                    // zoom out
+                                    if (state.zoomManager[fileurl]! > 1.0) {
+                                        state.zoomManager[fileurl]! -= 0.5
+                                    }
+                                }) {
+                                    Label("Zoom out", systemImage: "minus.magnifyingglass")
+                                }
+                                .keyboardShortcut("-", modifiers: .command)
+                                Button(action: {
+                                    // zoom in
+                                    if (state.zoomManager[fileurl]! < 100.0) {
+                                        state.zoomManager[fileurl]! += 0.5
+                                    }
+                                }) {
+                                    Label("Zoom in", systemImage: "plus.magnifyingglass")
+                                }
+                                .keyboardShortcut("=", modifiers: .command)
                             }
-                        }) {
-                            Label("Export", systemImage: "square.and.arrow.up")
-                        }
-                        .keyboardShortcut("e", modifiers: .command)
-                    })
-                }
-                .onChange(of: isKeyWindow, perform: { value in
-                    if (value == true) {
-                        state.activeurl = fileurl
+                            Button(action: {
+                                // Export
+                                let exportFilename:String = file.procreate_doc!.name ?? "Untitled Artwork"
+                                if (viewMode == 1) {
+                                    let exportImage:NSImage = file.procreate_doc!.composite_image!
+                                    exportController(exportImage: exportImage, filename: exportFilename).presentDialog(nil)
+                                } else if (viewMode == 2) {
+                                    exportController(exportImage: nil, isTimelapse: true, TLPlayer: file.procreate_doc?.videoPlayer, filename: exportFilename, fileurl: fileurl).presentDialog(nil)
+                                }
+                            }) {
+                                Label("Export", systemImage: "square.and.arrow.up")
+                            }
+                            .keyboardShortcut("e", modifiers: .command)
+                        })
                     }
-                })
+                    .onChange(of: isKeyWindow, perform: { value in
+                        if (value == true) {
+                            state.activeurl = fileurl
+                        }
+                    })
+            } else if (file.procreate_doc?.featureSet == 2) {
+                Procreate3DView(fileurl: fileurl, file: file, silica_doc: file.procreate_doc!, image_view_size: file.image_size!, show_meta: $show_meta)
+            }
         }
         if (file.file_ext == "brush") {
             BrushView(brush: file.brush!)
@@ -516,6 +520,31 @@ struct InfoCell: View {
         .padding(0)
     }
 }
+
+
+struct Procreate3DView: View {
+    var fileurl: String
+    @State var file: ProcreateDocumentType
+    @ObservedObject var silica_doc: SilicaDocument
+    @State var image_view_size: CGSize
+    @Binding var show_meta: Bool
+    @ObservedObject var state = appState
+    
+    var body: some View {
+        if (silica_doc.composite_image != nil) {
+            ProspectImageView(fileurl: fileurl, proImage: silica_doc.composite_image!, image_view_size: image_view_size)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .onTapGesture {
+                    self.show_meta = false
+                }
+        } else {
+            ProgressView(value: silica_doc.comp_load)
+                .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+}
+
 
 struct BrushView: View {
     @ObservedObject var brush: SilicaBrush

@@ -403,8 +403,21 @@ public func getArchive(_ file: FileWrapper) -> SilicaDocument? {
 // Get the metadata from a Procreate Document
 public func readProcreateData(data: Data) -> SilicaDocument? {
     do {
-        if let decoded_data = try NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(data) as? SilicaDocument {
-            return decoded_data
+//        if let decoded_data = try NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(data) as? SilicaDocument {
+        if let decoded_data = try NSKeyedUnarchiver.unarchivedObject(ofClasses: [NSArray.self,
+                                                                                 NSDictionary.self,
+                                                                                 NSString.self,
+                                                                                 NSNumber.self,
+                                                                                 NSData.self,
+                                                                                 SilicaDocument.self,
+                                                                                 ValkyrieDocumentAnimation.self,
+                                                                                 ValkyrieText.self,
+                                                                                 ValkyrieColorProfile.self,
+                                                                                 VideoSegmentInfo.self,
+                                                                                 SilicaLayer.self,
+                                                                                 SilicaGroup.self
+                                                                                ], from: data) {
+            return decoded_data as? SilicaDocument
         }
     } catch {
         NSLog("Error reading data: \(error)")
