@@ -37,8 +37,7 @@ public class exportController {
     @objc func presentDialog(_ sender: Any?) {
         if (view != nil) {
             // Set up 3D export stuff here
-            print(String(describing: view?.scene?.rootNode))
-            formats = ["usdz", "obj"]
+            formats = ["usdz"]
             selected3DFormat = .usdz
             panel.nameFieldLabel = "Save 3D File as:"
             // Check for '/' character in filename and handle it

@@ -9,6 +9,8 @@ import SwiftUI
 import Foundation
 import ProcreateDocument
 import SceneKit
+import ZIPFoundation
+
 
 
 struct SceneKitView: NSViewRepresentable {
@@ -207,7 +209,7 @@ func load3DScene(file: ProcreateDocumentType, view: SCNView, scene_load_progress
     view.scene = scene
     
     let allMaterials = file.procreate_doc!.unwrappedLayers3D!
-//    let allMaterials = file.procreate_doc!.unwrappedLayers!
+
     
     var counter:CGFloat = 0
     
@@ -261,9 +263,21 @@ func load3DScene(file: ProcreateDocumentType, view: SCNView, scene_load_progress
                                 mat.metalness.contents = metalness_texture
                                 mat.roughness.contents = roughness_texture
                             }
+                            if let normalUrl = mat.normal.contents as? URL {
+                                if let normalImg = getUSDZEmbeddedTexture(file: file.wrapper, textureUrl: normalUrl, meshExtension: file.procreate_doc?.meshExtension ?? "usdz") {
+                                    mat.normal.contents = normalImg
+                                }
+
+                            }
+                            if let ambientOccUrl = mat.ambientOcclusion.contents as? URL {
+                                if let ambOccImg = getUSDZEmbeddedTexture(file: file.wrapper, textureUrl: ambientOccUrl, meshExtension: file.procreate_doc?.meshExtension ?? "usdz") {
+                                    mat.ambientOcclusion.contents = ambOccImg
+                                }
+                            }
                         })
                         
                     })
+                    
                 }
             }
 
@@ -276,4 +290,45 @@ struct VertexData {
     var x, y, z: CGFloat // Position
     var nx, ny, nz: CGFloat // Normal
     var s, t: CGFloat // Texture Coords
+}
+
+
+// This is a bit hacky
+// Basically, usdz files don't give a url for embedded texture data.
+// Instead, they include an offset and a data length for which part of the USDZ file
+// represents that texture. This function parses that and tries to read
+// the image data from the file.
+
+func getUSDZEmbeddedTexture(file: FileWrapper?, textureUrl: URL, meshExtension: String?) -> NSImage? {
+    // First, get the usdz file data from the archive
+    guard let file = file else { return nil }
+    let archive = Archive(data: file.regularFileContents!, accessMode: .read, preferredEncoding: nil)
+       
+    var usdz_data:Data = Data()
+    
+    let path:String = "Mesh/Mesh.".appending(meshExtension ?? "usdz")
+
+    let entry = archive![path]
+    
+    do {
+        // DEBUG MODE
+        // try _ = archive!.extract(entry!, bufferSize: UInt32(100000000), skipCRC32: true, consumer: { (data) in
+        try _ = archive!.extract(entry!, bufferSize: UInt32(100000000), skipCRC32: false, consumer: { (data) in
+            usdz_data.append(data)
+        })
+    } catch {
+        NSLog("\(error)")
+    }
+    
+    
+    // I think I need to pick apart the textureUrl to get the offset and size,
+    // then add that on to the end of the mesh url that I *can* access
+    let imgInfo = textureUrl.absoluteString.split(separator: "?").last
+    let imgDataStart = imgInfo?.split(separator: "&")[0].split(separator: "=")[1]
+    let imgDataLength = imgInfo?.split(separator: "&")[1].split(separator: "=")[1]
+    let start = Int(imgDataStart ?? "0")
+    let length = Int(imgDataLength ?? "0")
+    let adjData = usdz_data.subdata(in: start!..<start!+length!)
+    let texImage = NSImage(data: adjData)
+    return texImage
 }

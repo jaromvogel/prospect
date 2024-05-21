@@ -142,11 +142,13 @@ public class SilicaDocument: NSObject, NSSecureCoding, ObservableObject {
         self.solo = nil
         self.strokeCount = nil
         self.tileSize = nil
+        self.unwrappedLayers = nil
         self.unwrappedLayers3D = nil
         self.videoEnabled = nil
         self.videoQualityKey = nil
         self.videoResolutionKey = nil
         self.videoDuration = nil
+        self.view = nil
     }
 }
 
@@ -219,6 +221,41 @@ public class SilicaLayer: NSObject, NSSecureCoding {
         UUID = coder.decodeObject(forKey: "UUID") as! String?
         version = coder.decodeInteger(forKey: "version")
         videoTime = coder.decodeObject(forKey: "videoTime") as! NSDictionary?
+    }
+    
+    deinit {
+        self.cleanUp()
+    }
+    
+    public func cleanUp() {
+        animationHeldLength = nil
+        blend = nil
+        bundledImagePath = nil
+        bundledMaskPath = nil
+        bundledVideoPath = nil
+        clipped = nil
+        contentsRect = nil
+        contentsRectValid = nil
+        document = nil
+        extendedBlend = nil
+        hidden = nil
+        locked = nil
+        mask = nil
+        name = nil
+        opacity = nil
+        perspectiveAssisted = nil
+        preserve = nil
+        `private` = nil
+        sizeHeight = nil
+        sizeWidth = nil
+        text = nil
+        textPDF = nil
+        textureSet = nil
+        transform = nil
+        type = nil
+        UUID = nil
+        version = nil
+        videoTime = nil
     }
 }
 
