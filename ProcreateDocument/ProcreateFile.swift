@@ -2,6 +2,7 @@ import Foundation
 import Cocoa
 import CoreGraphics
 import AVFoundation
+import SceneKit
 
 // Silica Document
 @objc(SilicaDocument)
@@ -13,6 +14,7 @@ public class SilicaDocument: NSObject, NSSecureCoding, ObservableObject {
     
     @Published public var composite_image:NSImage?
     @Published public var videoPlayer:AVPlayer?
+    public var view: SCNView?
     public var comp_load:CGFloat = 0.0
     
     public var animation:ValkyrieDocumentAnimation?
@@ -33,6 +35,7 @@ public class SilicaDocument: NSObject, NSSecureCoding, ObservableObject {
 //  public var lastTextStyling
     public var layers:[SilicaLayer]?
     public var mask:SilicaLayer?
+    public var meshExtension:String?
     public var name:String?
     public var orientation:Int?
     public var primaryItem:Any?
@@ -48,6 +51,8 @@ public class SilicaDocument: NSObject, NSSecureCoding, ObservableObject {
     public var solo: SilicaLayer?
     public var strokeCount: Int?
     public var tileSize: Int?
+    public var unwrappedLayers:[SilicaLayer]?
+    public var unwrappedLayers3D:[ValkyrieDocumentTextureSet]?
     public var videoEnabled: Bool? = true
     public var videoQualityKey: String?
     public var videoResolutionKey: String?
@@ -75,6 +80,7 @@ public class SilicaDocument: NSObject, NSSecureCoding, ObservableObject {
         isLastItemAnimationBackground = coder.decodeBool(forKey: "isLastItemAnimationBackground")
         layers = coder.decodeObject(forKey: "layers") as! [SilicaLayer]?
         mask = coder.decodeObject(forKey: "mask") as! SilicaLayer?
+        meshExtension = coder.decodeObject(forKey: "meshExtension") as! String?
         name = coder.decodeObject(forKey: "name") as! String?
         orientation = coder.decodeInteger(forKey: "orientation")
         primaryItem = coder.decodeObject(forKey: "primaryItem")
@@ -89,6 +95,8 @@ public class SilicaDocument: NSObject, NSSecureCoding, ObservableObject {
         solo = coder.decodeObject(forKey: "solo") as! SilicaLayer?
         strokeCount = coder.decodeObject(forKey: "strokeCount") as! Int?
         tileSize = coder.decodeInteger(forKey: "tileSize")
+        unwrappedLayers = coder.decodeObject(forKey: "unwrappedLayers") as! [SilicaLayer]?
+        unwrappedLayers3D = coder.decodeObject(forKey: "unwrappedLayers3D") as! [ValkyrieDocumentTextureSet]?
         if (coder.containsValue(forKey: "videoEnabled") == true) {
             videoEnabled = coder.decodeBool(forKey: "videoEnabled")
         }
@@ -119,6 +127,7 @@ public class SilicaDocument: NSObject, NSSecureCoding, ObservableObject {
         self.isLastItemAnimationBackground = nil
         self.layers = nil
         self.mask = nil
+        self.meshExtension = nil
         self.name = nil
         self.orientation = nil
         self.primaryItem = nil
@@ -133,6 +142,7 @@ public class SilicaDocument: NSObject, NSSecureCoding, ObservableObject {
         self.solo = nil
         self.strokeCount = nil
         self.tileSize = nil
+        self.unwrappedLayers3D = nil
         self.videoEnabled = nil
         self.videoQualityKey = nil
         self.videoResolutionKey = nil
@@ -166,8 +176,11 @@ public class SilicaLayer: NSObject, NSSecureCoding {
     public var perspectiveAssisted:Bool?
     public var preserve:Bool?
     public var `private`:Bool?
+    public var sizeHeight:Int?
+    public var sizeWidth:Int?
     public var text:ValkyrieText?
     public var textPDF:Data?
+    public var textureSet:ValkyrieDocumentTextureSet?
     public var transform:Data?
     public var type:Int?
     public var UUID:String?
@@ -183,8 +196,8 @@ public class SilicaLayer: NSObject, NSSecureCoding {
         bundledMaskPath = coder.decodeObject(forKey: "bundledMaskPath") as! String?
         bundledVideoPath = coder.decodeObject(forKey: "bundledVideoPath") as! String?
         clipped = coder.decodeBool(forKey: "clipped")
-        let contentsRectData = coder.decodeObject(forKey: "contentsRect") as AnyObject
-        contentsRect = contentsRectData.bytes!.load(as: NSRect.self) // Messy, but it seems to work!
+        let contentsRectData = coder.decodeObject(forKey: "contentsRect") as! NSData
+        contentsRect = contentsRectData.bytes.load(as: NSRect.self) // Messy, but it seems to work!
         contentsRectValid = coder.decodeBool(forKey: "contentsRectValid")
         document = coder.decodeObject(forKey: "document") as! SilicaDocument?
         extendedBlend = coder.decodeInteger(forKey: "extendedBlend")
@@ -196,8 +209,11 @@ public class SilicaLayer: NSObject, NSSecureCoding {
         perspectiveAssisted = coder.decodeBool(forKey: "perspectiveAssisted")
         preserve = coder.decodeBool(forKey: "preserve")
         `private` = coder.decodeBool(forKey: "private")
+        sizeHeight = coder.decodeInteger(forKey: "sizeHeight")
+        sizeWidth = coder.decodeInteger(forKey: "sizeWidth")
         text = coder.decodeObject(forKey: "text") as! ValkyrieText?
         textPDF = coder.decodeObject(forKey: "textPDF") as! Data?
+        textureSet = coder.decodeObject(forKey: "textureSet") as! ValkyrieDocumentTextureSet?
         transform = coder.decodeObject(forKey: "transform") as! Data?
         type = coder.decodeInteger(forKey: "type")
         UUID = coder.decodeObject(forKey: "UUID") as! String?
@@ -331,6 +347,152 @@ public class VideoSegmentInfo: NSObject, NSSecureCoding {
 
     
 }
+
+// 3D Texture Set
+@objc(ValkyrieDocumentTextureSet)
+public class ValkyrieDocumentTextureSet: NSObject, NSSecureCoding {
+    public static var supportsSecureCoding: Bool {
+        return true
+    }
+    
+    public var layers: [ValkyrieMaterialLayer]?
+    public var materialMaps: [SilicaLayer]?
+    public var textureSetComposite: ValkyrieMaterialLayer?
+    public var normalLayer: SilicaLayer?
+//    public var ambientOcclusionLayer: ???
+    public var name: String?
+    public var originalName: String?
+    public var meshes: [ValkyrieDocumentMesh]?
+
+    public func encode(with coder: NSCoder) {}
+    
+    public required init?(coder: NSCoder) {
+        layers = coder.decodeObject(forKey: "layers") as! [ValkyrieMaterialLayer]?
+        materialMaps = coder.decodeObject(forKey: "materialMaps") as! [SilicaLayer]?
+        normalLayer = coder.decodeObject(forKey: "normalLayer") as! SilicaLayer?
+        textureSetComposite = coder.decodeObject(forKey: "textureSetComposite") as! ValkyrieMaterialLayer?
+        name = coder.decodeObject(forKey: "name") as! String?
+        originalName = coder.decodeObject(forKey: "originalName") as! String?
+        meshes = coder.decodeObject(forKey: "meshes") as! [ValkyrieDocumentMesh]?
+    }
+    
+}
+
+@objc(ValkyrieMaterialLayer)
+public class ValkyrieMaterialLayer: NSObject, NSSecureCoding {
+    public static var supportsSecureCoding: Bool {
+        return true
+    }
+    
+    public var albedoLayer: SilicaLayer?
+    public var roughnessLayer: SilicaLayer?
+    public var metallicLayer: SilicaLayer?
+    public var UUID: String?
+    public var name: String?
+    
+    public func encode(with coder: NSCoder) {}
+    
+    public required init?(coder: NSCoder) {
+        albedoLayer = coder.decodeObject(forKey: "albedoLayer") as! SilicaLayer?
+        metallicLayer = coder.decodeObject(forKey: "metallicLayer") as! SilicaLayer?
+        roughnessLayer = coder.decodeObject(forKey: "roughnessLayer") as! SilicaLayer?
+        name = coder.decodeObject(forKey: "name") as! String?
+        UUID = coder.decodeObject(forKey: "UUID") as! String?
+    }
+}
+
+
+@objc(ValkyrieDocumentMesh)
+public class ValkyrieDocumentMesh: NSObject, NSSecureCoding {
+    public static var supportsSecureCoding: Bool {
+        return true
+    }
+    
+    public var cachedMeshObject: ValkyrieCachedMeshObject?
+    public var name: String?
+    
+    public required init?(coder: NSCoder) {
+        cachedMeshObject = coder.decodeObject(forKey: "cachedMeshObject") as! ValkyrieCachedMeshObject?
+        name = coder.decodeObject(forKey: "name") as! String?
+    }
+    
+    public func encode(with coder: NSCoder) {}
+}
+
+
+@objc(ValkyrieCachedMeshObject)
+public class ValkyrieCachedMeshObject: NSObject, NSSecureCoding {
+    public static var supportsSecureCoding: Bool {
+        return true
+    }
+    
+    public var meshIndex: Int?
+    public var children: [ValkyrieCachedMeshObject]?
+    public var dilatedTriangleBuffer: ValkyrieCachedMeshBuffer?
+    public var dilatedTriangleCount: Int?
+    public var indexBuffer: ValkyrieCachedMeshBuffer?
+    public var indexCount: Int?
+    public var indexType: Int?
+    public var vertexCount: Int?
+    public var vertexUVBuffer: ValkyrieCachedMeshBuffer?
+    public var vertexPositionBuffer: ValkyrieCachedMeshBuffer?
+    public var textureSet: ValkyrieDocumentTextureSet?
+    
+    public required init?(coder: NSCoder) {
+        meshIndex = coder.decodeInteger(forKey: "meshIndex")
+        children = coder.decodeObject(forKey: "children") as! [ValkyrieCachedMeshObject]?
+        dilatedTriangleBuffer = coder.decodeObject(forKey: "dilatedTriangleBuffer") as! ValkyrieCachedMeshBuffer?
+        dilatedTriangleCount = coder.decodeInteger(forKey: "dilatedTriangleCount")
+        indexBuffer = coder.decodeObject(forKey: "indexBuffer") as! ValkyrieCachedMeshBuffer?
+        indexCount = coder.decodeInteger(forKey: "indexCount")
+        indexType = coder.decodeInteger(forKey: "indexType")
+        vertexCount = coder.decodeInteger(forKey: "vertexCount")
+        vertexUVBuffer = coder.decodeObject(forKey: "vertexUVBuffer") as! ValkyrieCachedMeshBuffer?
+        vertexPositionBuffer = coder.decodeObject(forKey: "vertexPositionBuffer") as! ValkyrieCachedMeshBuffer?
+        textureSet = coder.decodeObject(forKey: "textureSet") as! ValkyrieDocumentTextureSet?
+    }
+    
+    public func encode(with coder: NSCoder) {}
+}
+
+
+@objc(ValkyrieCachedMeshBuffer)
+public class ValkyrieCachedMeshBuffer: NSObject, NSSecureCoding {
+    public static var supportsSecureCoding: Bool {
+        return true
+    }
+    
+    public var cachedMesh: ValkyrieCachedMesh?
+    public var length: Int?
+    public var uuid: String?
+    
+    public required init?(coder: NSCoder) {
+        cachedMesh = coder.decodeObject(forKey: "cachedMesh") as! ValkyrieCachedMesh?
+        length = coder.decodeInteger(forKey: "length")
+        uuid = coder.decodeObject(forKey: "uuid") as! String?
+    }
+    
+    public func encode(with coder: NSCoder) {}
+}
+
+
+@objc(ValkyrieCachedMesh)
+public class ValkyrieCachedMesh: NSObject, NSSecureCoding {
+    public static var supportsSecureCoding: Bool {
+        return true
+    }
+    
+    public var rootObject: ValkyrieCachedMeshObject?
+    public var version: Int?
+    
+    public required init?(coder: NSCoder) {
+        rootObject = coder.decodeObject(forKey: "rootObject") as! ValkyrieCachedMeshObject?
+        version = coder.decodeInteger(forKey: "version")
+    }
+    
+    public func encode(with coder: NSCoder) {}
+}
+
 
 // get rgba as float array from data
 public extension Data {

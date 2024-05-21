@@ -15,13 +15,18 @@ public extension SilicaDocument {
     func getLayer(_ layer: SilicaLayer?, _ file: FileWrapper, _ callback: @escaping () -> Void = {}) -> NSImage? {
         if (layer == nil) {
             if ((self.featureSet != nil) && self.featureSet == 2) {
+                // ‼️‼️‼️ Generate thumb image rather than loading composite if this is a 3D file
+                // This is unused now aside from exporting, which I'd like to replace
                 self.composite_image = getThumbImage(file: file, altpath: nil)
             }
         } else {
             var size:CGSize = (layer?.contentsRect!.size)!
-            if (layer!.UUID == self.composite!.UUID) { // resolves issue where a procreate file may not have generated its composite layer size yet
-                size = self.size!
+            if (self.composite != nil) {
+                if (layer!.UUID == self.composite!.UUID) { // resolves issue where a procreate file may not have generated its composite layer size yet
+                    size = self.size!
+                }
             }
+
             let tileSize:Int = (self.tileSize)!
             
             // How many columns / rows of image chunks are in the file
@@ -42,7 +47,7 @@ public extension SilicaDocument {
             var buffer_img:NSImage?
             
             // If this is the composite layer:
-            if (layer!.UUID == self.composite!.UUID) {
+            if (layer!.UUID == self.composite?.UUID) {
 
                 DispatchQueue.global(qos: .userInitiated).async {
                     buffer_img = decompressAndCompositeImages(file, layer!, self, image_chunks)
@@ -96,15 +101,17 @@ private class chunkImage {
     var x_pos: CGFloat?
     var y_pos: CGFloat?
     var rect: CGRect?
+    var type:Int?
     var lz4_compression: Bool?
     
-    init(_ row: Int, _ column: Int, _ tileSize: CGSize, _ filename: String, _ filepath: String, _ colorSpace: String?, _ lz4_compression: Bool?) {
+    init(_ row: Int, _ column: Int, _ tileSize: CGSize, _ filename: String, _ filepath: String, _ colorSpace: String?, _ lz4_compression: Bool?, _ type: Int = 7) {
         self.row = row
         self.column = column
         self.tileSize = tileSize
         self.filename = filename
         self.filepath = filepath
         self.colorSpace = colorSpace
+        self.type = type
         self.lz4_compression = lz4_compression
         self.x_pos = CGFloat(256 * CGFloat(self.column!))
         self.y_pos = CGFloat(256 * CGFloat(self.row!))
@@ -121,6 +128,7 @@ private func getLayerData(_ layer: SilicaLayer, _ columns: Int, _ rows: Int, _ d
         return []
     }
     
+    // Try hard coding something around here to check what's going on in each of the folders?
     let layer_dir = layer.UUID!.appending("/")
     let entries = archive.filter { $0.path.starts(with: layer_dir) }
     
@@ -157,13 +165,25 @@ private func decompressAndCompositeImages(_ file: FileWrapper, _ layer: SilicaLa
 
     var counter:CGFloat = 0
     
-    var layer_image = NSImage(size: (metadata.size)!, actions: { ctx in
+    var size:NSSize = metadata.size ?? NSSize(width: 2048, height: 2048)
+    if (layer.sizeWidth != nil && layer.sizeWidth != 0) {
+        size.width = CGFloat(layer.sizeWidth ?? 0)
+    }
+    if (layer.sizeHeight != nil && layer.sizeHeight != 0) {
+        size.height = CGFloat(layer.sizeHeight ?? 0)
+    }
+
+    var layer_image = NSImage(size: size, actions: { ctx in
         
         ctx.interpolationQuality = .none // avoid weird resampling stuff that makes the image look blurry
         DispatchQueue.global(qos: .userInteractive).sync {
             DispatchQueue.concurrentPerform(iterations: chunks.count, execute: { index in
                 autoreleasepool {
-                    decompressChunk(file, chunk: chunks[index])
+                    var grayscale: Bool = false
+                    if (layer.type == 9) {
+                        grayscale = true
+                    }
+                    decompressChunk(file, chunk: chunks[index], grayscale: grayscale)
                     
                     let image = chunks[index].image!
                     let flipped = image.flipVertically()
@@ -171,7 +191,7 @@ private func decompressAndCompositeImages(_ file: FileWrapper, _ layer: SilicaLa
                     
                     // keep track of how many chunks have been read
                     counter += 1
-                    if (layer.UUID == metadata.composite!.UUID) {
+                    if (layer.UUID == metadata.composite?.UUID) {
                         DispatchQueue.main.sync {
                             // update the progress bar
                             metadata.comp_load = counter / CGFloat(chunks.count)
@@ -192,7 +212,9 @@ private func decompressAndCompositeImages(_ file: FileWrapper, _ layer: SilicaLa
     
     })
     
-    layer_image = layer_image.rotated(by: CGFloat(metadata.getRotation()) * -1)
+    if (metadata.featureSet != 2) {
+        layer_image = layer_image.rotated(by: CGFloat(metadata.getRotation()) * -1)
+    }
     if (metadata.flippedVertically == true) {
         layer_image = layer_image.flipVertically()
     }
@@ -223,7 +245,7 @@ private func decompressAndCompositeImages(_ file: FileWrapper, _ layer: SilicaLa
 }
 
 // unarchive the data from the chunk file, but don't do anything else yet
-private func decompressChunk(_ file: FileWrapper, chunk: chunkImage) {
+private func decompressChunk(_ file: FileWrapper, chunk: chunkImage, grayscale: Bool = false) {
     
     guard let archive = Archive(data: file.regularFileContents!, accessMode: .read) else {
         print("couldn't read procreate archive")
@@ -242,9 +264,9 @@ private func decompressChunk(_ file: FileWrapper, chunk: chunkImage) {
             chunk.data?.append(data)
         })
         if (chunk.lz4_compression == false) {
-            readChunkData(chunk)
+            readChunkData(chunk, grayscale: grayscale)
         } else {
-            readChunkLZ4Data(chunk)
+            readChunkLZ4Data(chunk, grayscale: grayscale)
         }
     } catch {
         NSLog("\(error)")
@@ -252,7 +274,7 @@ private func decompressChunk(_ file: FileWrapper, chunk: chunkImage) {
 }
 
 // Use miniLZO to decompress the pixel data from a chunk
-private func readChunkData(_ chunk: chunkImage) {
+private func readChunkData(_ chunk: chunkImage, grayscale: Bool = false) {
     let src_mutable:UnsafeMutablePointer<UInt8> = UnsafeMutablePointer<UInt8>.allocate(capacity: chunk.data!.count)
     src_mutable.initialize(repeating: 0, count: chunk.data!.count)
     defer {
@@ -284,7 +306,7 @@ private func readChunkData(_ chunk: chunkImage) {
     if (r == LZO_E_OK) {
         let dst_pointer = UnsafePointer(dst)
         
-        let chunk_image:NSImage = imageFromPixels(size: chunk.tileSize!, pixels: dst_pointer, width: Int(chunk.tileSize!.width), height: Int(chunk.tileSize!.height), colorSpace: chunk.colorSpace)
+        let chunk_image:NSImage = imageFromPixels(size: chunk.tileSize!, pixels: dst_pointer, width: Int(chunk.tileSize!.width), height: Int(chunk.tileSize!.height), colorSpace: chunk.colorSpace, grayscale: grayscale, data_length: chunk.data!.count)
         
 //        chunk.image = chunk_image.addTextToImage(drawText: "col: \(chunk.column!)\nrow: \(chunk.row!)")
         chunk.image = chunk_image
@@ -295,13 +317,13 @@ private func readChunkData(_ chunk: chunkImage) {
     }
 }
 
-private func readChunkLZ4Data(_ chunk: chunkImage) {
+private func readChunkLZ4Data(_ chunk: chunkImage, grayscale: Bool = false) {
     do {
         let decompData = try (chunk.data! as NSData).decompressed(using: .lz4)
 
         let pixels = decompData.bytes.assumingMemoryBound(to: UInt8.self)
         
-        let chunk_image:NSImage = imageFromPixels(size: chunk.tileSize!, pixels: pixels, width: Int(chunk.tileSize!.width), height: Int(chunk.tileSize!.height), colorSpace: chunk.colorSpace)
+        let chunk_image:NSImage = imageFromPixels(size: chunk.tileSize!, pixels: pixels, width: Int(chunk.tileSize!.width), height: Int(chunk.tileSize!.height), colorSpace: chunk.colorSpace, grayscale: grayscale, data_length: chunk.data!.count)
         
         chunk.image = chunk_image
     } catch {
@@ -311,31 +333,40 @@ private func readChunkLZ4Data(_ chunk: chunkImage) {
 
 
 // Create the an actual image from the chunk's pixel data
-private func imageFromPixels(size: NSSize, pixels: UnsafePointer<UInt8>, width: Int, height: Int, colorSpace: String?) -> NSImage {
-    let imageColorSpace = CGColorSpace(name: CGColorSpace.sRGB)
-
-    let bitmapInfo:CGBitmapInfo = CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue)
+private func imageFromPixels(size: NSSize, pixels: UnsafePointer<UInt8>, width: Int, height: Int, colorSpace: String?, grayscale: Bool = false, data_length: Int) -> NSImage {
+    
+    var imageRef: CGImage?
+    var bitmapInfo:CGBitmapInfo = [CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue), CGBitmapInfo(rawValue: CGImageByteOrderInfo.orderDefault.rawValue)]
+    var colorspace = CGColorSpaceCreateDeviceRGB()
+    
     let bitsPerComponent = 8 //number of bits in UInt8
-    let bitsPerPixel = 4 * bitsPerComponent //ARGB uses 4 components
-    let bytesPerRow = bitsPerPixel * width / 8 // bitsPerRow / 8 (in some cases, you need some paddings)
+    var bytesPerPixel = 4 //ARGB uses 4 components
+    if (grayscale == true) {
+        bytesPerPixel = 1 //Grayscale uses 1 component
+        bitmapInfo = [CGBitmapInfo(rawValue: CGImageAlphaInfo.none.rawValue), CGBitmapInfo(rawValue: CGImageByteOrderInfo.orderDefault.rawValue)]
+        colorspace = CGColorSpaceCreateDeviceGray()
+    }
+    let bitsPerPixel = bytesPerPixel * bitsPerComponent
+    let bytesPerRow = bytesPerPixel * width
     let providerRef = CGDataProvider(
         data: NSData(bytes: pixels, length: height * bytesPerRow)
     )
 
-    let cgim = CGImage(
+    imageRef = CGImage(
         width: width,
         height: height,
         bitsPerComponent: bitsPerComponent,
         bitsPerPixel: bitsPerPixel,
         bytesPerRow: bytesPerRow,
-        space: imageColorSpace!,
+        space: colorspace,
         bitmapInfo: bitmapInfo,
         provider: providerRef!,
         decode: nil,
         shouldInterpolate: false,
         intent: .defaultIntent
     )
-    return NSImage(cgImage: cgim!, size: size)
+    
+    return NSImage(cgImage: imageRef!, size: size)
 }
 
 
@@ -411,8 +442,14 @@ public func readProcreateData(data: Data) -> SilicaDocument? {
                                                                                  NSData.self,
                                                                                  SilicaDocument.self,
                                                                                  ValkyrieDocumentAnimation.self,
+                                                                                 ValkyrieDocumentTextureSet.self,
+                                                                                 ValkyrieMaterialLayer.self,
                                                                                  ValkyrieText.self,
                                                                                  ValkyrieColorProfile.self,
+                                                                                 ValkyrieDocumentMesh.self,
+                                                                                 ValkyrieCachedMeshObject.self,
+                                                                                 ValkyrieCachedMesh.self,
+                                                                                 ValkyrieCachedMeshBuffer.self,
                                                                                  VideoSegmentInfo.self,
                                                                                  SilicaLayer.self,
                                                                                  SilicaGroup.self

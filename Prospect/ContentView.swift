@@ -13,6 +13,7 @@ import UniformTypeIdentifiers
 import AVFoundation
 import AVKit
 import Sparkle
+import SceneKit
 
 
 extension UTType {
@@ -39,9 +40,9 @@ public class AppState: ObservableObject {
 
 public let appState = AppState()
 
-struct ProcreateDocumentType: FileDocument {
+public struct ProcreateDocumentType: FileDocument {
 
-    static var readableContentTypes: [UTType] { [.procreateFiles, .brushFiles, .swatchesFiles, .brushSetFiles] }
+    public static var readableContentTypes: [UTType] { [.procreateFiles, .brushFiles, .swatchesFiles, .brushSetFiles] }
     weak var procreate_doc: SilicaDocument?
     var brushset_file: ProcreateBrushset?
     var wrapper: FileWrapper?
@@ -52,7 +53,7 @@ struct ProcreateDocumentType: FileDocument {
     var swatches_image: NSImage?
     var brushset_image: NSImage? = nil
 
-    init(configuration: ReadConfiguration) throws {
+    public init(configuration: ReadConfiguration) throws {
         // Read the file's contents from file.regularFileContents
         wrapper = configuration.file
         let filename = configuration.file.filename!
@@ -79,7 +80,7 @@ struct ProcreateDocumentType: FileDocument {
         brushset_file?.getBrushsetImage(file: wrapper!, brushLabels: false)
     }
     
-    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+    public func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
         // Create a FileWrapper with the updated contents and set configuration.fileWrapper to it.
         // This is possible because fileWrapper is an inout parameter.
         return configuration.existingFile!
@@ -127,9 +128,16 @@ struct DocumentScene: Scene {
                 if (fileurl == state.activeurl) {
                     var exportImage: NSImage?
                     var exportFilename: String?
+                    var view: SCNView?
                     if (file.document.file_ext == "procreate") {
-                        exportImage = file.document.procreate_doc!.composite_image
-                        exportFilename = file.document.procreate_doc!.name!
+                        if (file.document.procreate_doc?.featureSet == 2) {
+                            // Handle 3D export here
+                            view = file.document.procreate_doc?.view
+                            exportFilename = file.document.procreate_doc?.name ?? "Untitled Artwork"
+                        } else {
+                            exportImage = file.document.procreate_doc!.composite_image
+                            exportFilename = file.document.procreate_doc!.name!
+                        }
                     } else if (file.document.file_ext == "brush") {
                         exportImage = file.document.brush_thumb
                         exportFilename = String((file.fileURL?.lastPathComponent.split(separator: ".").first)!)
@@ -137,7 +145,8 @@ struct DocumentScene: Scene {
                         exportImage = file.document.swatches_image
                         exportFilename = String((file.fileURL?.lastPathComponent.split(separator: ".").first)!)
                     }
-                    exportController(exportImage: exportImage, filename: exportFilename ?? "Unknown").presentDialog(nil)
+                    print("export command received")
+                    exportController(exportImage: exportImage, filename: exportFilename ?? "Unknown", view: view).presentDialog(nil)
                 }
             }
             .onReceive(exportLayersCommand) { _ in
@@ -217,9 +226,9 @@ struct DocumentScene: Scene {
                 Button("Export") {
                     exportCommand.send()
                 }.keyboardShortcut("e")
-//                Button("Export PNG Layers") {
-//                    exportLayersCommand.send()
-//                }.keyboardShortcut("e", modifiers: .option)
+                Button("Export PNG Layers") {
+                    exportLayersCommand.send()
+                }.keyboardShortcut("e", modifiers: .option)
                 Divider()
                 Button("Close") {
                     NSApplication.shared.keyWindow?.close()
@@ -257,72 +266,68 @@ struct ContentView: View {
     
     var body: some View {
         if (file.file_ext == "procreate") {
-            if (file.procreate_doc?.featureSet == nil || file.procreate_doc?.featureSet == 1) {
-                ProcreateView(fileurl: fileurl, file: file, silica_doc: file.procreate_doc!, image_view_size: file.image_size!, show_meta: $show_meta, viewMode: $viewMode)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .toolbar {
-                        ToolbarItem(content: {
-                            Button(action: {
-                                show_meta.toggle()
-                            }) {
-                                Label("Info", systemImage: "info.circle")
-                            }
-                            .keyboardShortcut("i", modifiers: .command)
-                        })
-                        ToolbarItemGroup(placement: ToolbarItemPlacement.principal, content: {
-                            Spacer()
-                            Picker("View", selection: $viewMode) {
-                                Text("Artwork").tag(1)
-                                Text("Timelapse").tag(2)
-                            }
-                            .pickerStyle(SegmentedPickerStyle())
-                            Spacer()
-                        })
-                        ToolbarItemGroup(content: {
-                            Spacer()
-                            if (viewMode == 1) {
-                                Button(action: {
-                                    // zoom out
-                                    if (state.zoomManager[fileurl]! > 1.0) {
-                                        state.zoomManager[fileurl]! -= 0.5
-                                    }
-                                }) {
-                                    Label("Zoom out", systemImage: "minus.magnifyingglass")
-                                }
-                                .keyboardShortcut("-", modifiers: .command)
-                                Button(action: {
-                                    // zoom in
-                                    if (state.zoomManager[fileurl]! < 100.0) {
-                                        state.zoomManager[fileurl]! += 0.5
-                                    }
-                                }) {
-                                    Label("Zoom in", systemImage: "plus.magnifyingglass")
-                                }
-                                .keyboardShortcut("=", modifiers: .command)
-                            }
-                            Button(action: {
-                                // Export
-                                let exportFilename:String = file.procreate_doc!.name ?? "Untitled Artwork"
-                                if (viewMode == 1) {
-                                    let exportImage:NSImage = file.procreate_doc!.composite_image!
-                                    exportController(exportImage: exportImage, filename: exportFilename).presentDialog(nil)
-                                } else if (viewMode == 2) {
-                                    exportController(exportImage: nil, isTimelapse: true, TLPlayer: file.procreate_doc?.videoPlayer, filename: exportFilename, fileurl: fileurl).presentDialog(nil)
-                                }
-                            }) {
-                                Label("Export", systemImage: "square.and.arrow.up")
-                            }
-                            .keyboardShortcut("e", modifiers: .command)
-                        })
-                    }
-                    .onChange(of: isKeyWindow, perform: { value in
-                        if (value == true) {
-                            state.activeurl = fileurl
+            ProcreateView(fileurl: fileurl, file: file, silica_doc: file.procreate_doc!, image_view_size: file.image_size!, show_meta: $show_meta, viewMode: $viewMode)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .toolbar {
+                    ToolbarItem(content: {
+                        Button(action: {
+                            show_meta.toggle()
+                        }) {
+                            Label("Info", systemImage: "info.circle")
                         }
+                        .keyboardShortcut("i", modifiers: .command)
                     })
-            } else if (file.procreate_doc?.featureSet == 2) {
-                Procreate3DView(fileurl: fileurl, file: file, silica_doc: file.procreate_doc!, image_view_size: file.image_size!, show_meta: $show_meta)
-            }
+                    ToolbarItemGroup(placement: ToolbarItemPlacement.principal, content: {
+                        Spacer()
+                        Picker("View", selection: $viewMode) {
+                            Text("Artwork").tag(1)
+                            Text("Timelapse").tag(2)
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                        Spacer()
+                    })
+                    ToolbarItemGroup(content: {
+                        Spacer()
+                        if (viewMode == 1) {
+                            Button(action: {
+                                // zoom out
+                                if (state.zoomManager[fileurl]! > 1.0) {
+                                    state.zoomManager[fileurl]! -= 0.5
+                                }
+                            }) {
+                                Label("Zoom out", systemImage: "minus.magnifyingglass")
+                            }
+                            .keyboardShortcut("-", modifiers: .command)
+                            Button(action: {
+                                // zoom in
+                                if (state.zoomManager[fileurl]! < 100.0) {
+                                    state.zoomManager[fileurl]! += 0.5
+                                }
+                            }) {
+                                Label("Zoom in", systemImage: "plus.magnifyingglass")
+                            }
+                            .keyboardShortcut("=", modifiers: .command)
+                        }
+                        Button(action: {
+                            // Export
+                            let exportFilename:String = file.procreate_doc!.name ?? "Untitled Artwork"
+                            if (viewMode == 1) {
+                                let exportImage:NSImage = file.procreate_doc!.composite_image!
+                                exportController(exportImage: exportImage, filename: exportFilename, view: file.procreate_doc?.view).presentDialog(nil)
+                            } else if (viewMode == 2) {
+                                exportController(exportImage: nil, isTimelapse: true, TLPlayer: file.procreate_doc?.videoPlayer, filename: exportFilename, fileurl: fileurl).presentDialog(nil)
+                            }
+                        }) {
+                            Label("Export", systemImage: "square.and.arrow.up")
+                        }
+                        .keyboardShortcut("e", modifiers: .command)
+                    })
+                }
+                .onChange(of: isKeyWindow, perform: { value in
+                    if (value == true) {
+                        state.activeurl = fileurl
+                    }
+                })
         }
         if (file.file_ext == "brush") {
             BrushView(brush: file.brush!)
@@ -404,11 +409,17 @@ struct ProcreateView: View {
         ZStack() {
             if (viewMode == 1) {
                 if (silica_doc.composite_image != nil) {
-                    ProspectImageView(fileurl: fileurl, proImage: silica_doc.composite_image!, image_view_size: image_view_size)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .onTapGesture {
-                            self.show_meta = false
-                        }
+                    if (file.procreate_doc?.featureSet == nil || file.procreate_doc?.featureSet == 1 || file.procreate_doc?.featureSet == 0) {
+                        ProspectImageView(fileurl: fileurl, proImage: silica_doc.composite_image!, image_view_size: image_view_size)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .onTapGesture {
+                                self.show_meta = false
+                            }
+                    } else if (file.procreate_doc?.featureSet == 2) {
+                        // Show 3D View
+                        Procreate3DView(file: file, fileurl: fileurl, proImage: silica_doc.composite_image!, image_view_size: image_view_size, show_meta: $show_meta)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
                 } else {
                     ProgressView(value: silica_doc.comp_load)
                         .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
@@ -518,30 +529,6 @@ struct InfoCell: View {
         }
 //        .frame(maxWidth: .infinity)
         .padding(0)
-    }
-}
-
-
-struct Procreate3DView: View {
-    var fileurl: String
-    @State var file: ProcreateDocumentType
-    @ObservedObject var silica_doc: SilicaDocument
-    @State var image_view_size: CGSize
-    @Binding var show_meta: Bool
-    @ObservedObject var state = appState
-    
-    var body: some View {
-        if (silica_doc.composite_image != nil) {
-            ProspectImageView(fileurl: fileurl, proImage: silica_doc.composite_image!, image_view_size: image_view_size)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .onTapGesture {
-                    self.show_meta = false
-                }
-        } else {
-            ProgressView(value: silica_doc.comp_load)
-                .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
     }
 }
 
@@ -716,7 +703,34 @@ class ImageViewer: NSScrollView {
 //        }
 }
 
+struct Procreate3DView: View {
+    var file: ProcreateDocumentType
+    var fileurl: String
+    @State var proImage: NSImage
+    @State var image_view_size: CGSize
+    @State var scene_load_progress: CGFloat = 0
+    @Binding var show_meta: Bool
+    @ObservedObject var state = appState
+    
+    var body: some View {
+        ZStack {
+            SceneKitView(file: file, scene_load_progress: $scene_load_progress, show_meta: $show_meta)
+                .onTapGesture {
+                    print("tapped the thing")
+                }
+            if (scene_load_progress < 1.0) {
+                VStack(spacing: 0, content: {
+                    ProgressView(value: scene_load_progress)
+                        .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                })
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(VisualEffectBlur(material: .popover))
+            }
+        }
 
+    }
+}
 
 // Hacky way of accessing the NSWindow of a view
 struct HostingWindowFinder: NSViewRepresentable {
