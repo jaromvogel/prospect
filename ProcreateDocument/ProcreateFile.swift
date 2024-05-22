@@ -182,7 +182,7 @@ public class SilicaLayer: NSObject, NSSecureCoding {
     public var sizeWidth:Int?
     public var text:ValkyrieText?
     public var textPDF:Data?
-    public var textureSet:ValkyrieDocumentTextureSet?
+//    public var textureSet:ValkyrieDocumentTextureSet?
     public var transform:Data?
     public var type:Int?
     public var UUID:String?
@@ -215,7 +215,7 @@ public class SilicaLayer: NSObject, NSSecureCoding {
         sizeWidth = coder.decodeInteger(forKey: "sizeWidth")
         text = coder.decodeObject(forKey: "text") as! ValkyrieText?
         textPDF = coder.decodeObject(forKey: "textPDF") as! Data?
-        textureSet = coder.decodeObject(forKey: "textureSet") as! ValkyrieDocumentTextureSet?
+//        textureSet = coder.decodeObject(forKey: "textureSet") as! ValkyrieDocumentTextureSet?
         transform = coder.decodeObject(forKey: "transform") as! Data?
         type = coder.decodeInteger(forKey: "type")
         UUID = coder.decodeObject(forKey: "UUID") as! String?
@@ -250,7 +250,7 @@ public class SilicaLayer: NSObject, NSSecureCoding {
         sizeWidth = nil
         text = nil
         textPDF = nil
-        textureSet = nil
+//        textureSet = nil
         transform = nil
         type = nil
         UUID = nil
@@ -445,11 +445,11 @@ public class ValkyrieDocumentMesh: NSObject, NSSecureCoding {
         return true
     }
     
-    public var cachedMeshObject: ValkyrieCachedMeshObject?
+//    public var cachedMeshObject: ValkyrieCachedMeshObject?
     public var name: String?
     
     public required init?(coder: NSCoder) {
-        cachedMeshObject = coder.decodeObject(forKey: "cachedMeshObject") as! ValkyrieCachedMeshObject?
+//        cachedMeshObject = coder.decodeObject(forKey: "cachedMeshObject") as! ValkyrieCachedMeshObject?
         name = coder.decodeObject(forKey: "name") as! String?
     }
     
@@ -499,12 +499,12 @@ public class ValkyrieCachedMeshBuffer: NSObject, NSSecureCoding {
         return true
     }
     
-    public var cachedMesh: ValkyrieCachedMesh?
+//    public var cachedMesh: ValkyrieCachedMesh?
     public var length: Int?
     public var uuid: String?
     
     public required init?(coder: NSCoder) {
-        cachedMesh = coder.decodeObject(forKey: "cachedMesh") as! ValkyrieCachedMesh?
+//        cachedMesh = coder.decodeObject(forKey: "cachedMesh") as! ValkyrieCachedMesh?
         length = coder.decodeInteger(forKey: "length")
         uuid = coder.decodeObject(forKey: "uuid") as! String?
     }

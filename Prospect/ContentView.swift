@@ -193,7 +193,7 @@ struct DocumentScene: Scene {
                     writeImageToPasteboard(img: file.document.procreate_doc?.composite_image)
                 }
             }
-            .modifier(WindowObservationModifier())
+//            .modifier(WindowObservationModifier())
             .onReceive(zoomInCommand) {
                 // some kind of check to see if fileurl is associated with the current active window
                 if (fileurl == state.activeurl) {
