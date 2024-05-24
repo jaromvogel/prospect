@@ -36,6 +36,9 @@ public class AppState: ObservableObject {
     @Published var activeurl: String?
     @Published var exportingTL:Dictionary<String, Bool> = [String: Bool]()
     @Published var exportProgress:Dictionary<String, CGFloat> = [String: CGFloat]()
+    @Published var exportingLayers:Dictionary<String, Bool> = [String: Bool]()
+    @Published var exportingLayersProgress:Dictionary<String, CGFloat> = [String: CGFloat]()
+    @Published var documentType: String?
 }
 
 public let appState = AppState()
@@ -46,6 +49,7 @@ public struct ProcreateDocumentType: FileDocument {
     weak var procreate_doc: SilicaDocument?
     var brushset_file: ProcreateBrushset?
     var wrapper: FileWrapper?
+    var windowObservationMod: WindowObservationModifier?
     var file_ext: String?
     var image_size: CGSize?
     var brush: SilicaBrush?
@@ -56,6 +60,7 @@ public struct ProcreateDocumentType: FileDocument {
     public init(configuration: ReadConfiguration) throws {
         // Read the file's contents from file.regularFileContents
         wrapper = configuration.file
+        windowObservationMod = WindowObservationModifier()
         let filename = configuration.file.filename!
         file_ext = URL(fileURLWithPath: filename).pathExtension
         if (file_ext == "procreate") {
@@ -100,6 +105,7 @@ struct ContentApp: App {
 struct DocumentScene: Scene {
     private let exportCommand = PassthroughSubject<Void, Never>()
     private let exportLayersCommand = PassthroughSubject<Void, Never>()
+    private let exportFlattenedLayersCommand = PassthroughSubject<Void, Never>()
     private let copyCommand = PassthroughSubject<Void, Never>()
     private let zoomInCommand = PassthroughSubject<Void, Never>()
     private let zoomOutCommand = PassthroughSubject<Void, Never>()
@@ -123,6 +129,8 @@ struct DocumentScene: Scene {
                 } else if (file.document.file_ext == "swatches") {
                     file.document.swatches_image = nil
                 }
+                file.document.windowObservationMod = nil
+                print("clean up window observer here somehow")
             }
             .onReceive(exportCommand) { _ in
                 if (fileurl == state.activeurl) {
@@ -145,40 +153,20 @@ struct DocumentScene: Scene {
                         exportImage = file.document.swatches_image
                         exportFilename = String((file.fileURL?.lastPathComponent.split(separator: ".").first)!)
                     }
-                    print("export command received")
                     exportController(exportImage: exportImage, filename: exportFilename ?? "Unknown", view: view).presentDialog(nil)
                 }
             }
             .onReceive(exportLayersCommand) { _ in
-                // Using a foreach loop with autoreleasepool instead of concurrentperform is easier on RAM, but quite a bit slower
-                DispatchQueue.concurrentPerform(iterations: file.document.procreate_doc!.layers!.count, execute: { index in
-                    autoreleasepool {
-                        let layer = file.document.procreate_doc!.layers![index]
-                        var layer_img = file.document.procreate_doc!.getLayer(layer, file.document.wrapper!)
-                        if (layer_img != nil) {
-                            // write each layer to disk, then clear it from memory
-                            let fileUrl = FileManager.default.temporaryDirectory.appendingPathComponent("com.jaromvogel.prospect")
-                            do {
-        //                        try? FileManager.default.removeItem(at: fileUrl)
-                                try FileManager.default.createDirectory(at: fileUrl, withIntermediateDirectories: true, attributes: nil)
-                            } catch {
-                                print("couldn't create the directory :(")
-                            }
-                            
-                            let layernumber = file.document.procreate_doc!.layers!.firstIndex(of: layer)
-                            let filename = String(layernumber!).appending("_").appending("_").appending(layer.name!)
-                            if layer_img!.save(as: filename, fileType: .tiff, at: fileUrl) {
-                                // Do something here when saving to disk is done
-                                // Maybe export to PSD somehow??
-                                print("\(String(describing: layer.name!)) saved at \(String(describing: fileUrl))")
-                            }
-
-                        } else {
-                            print("layer not loaded!")
-                        }
-                        layer_img = nil
-                    }
-                })
+                if (fileurl == state.activeurl) {
+                    let exportFilename = String((file.fileURL?.lastPathComponent.split(separator: ".").first)!)
+                    exportLayersController(procreateFile: file.document, exportFilename: exportFilename, exportFlattened: false, fileurl: fileurl).presentDialog(nil)
+                }
+            }
+            .onReceive(exportFlattenedLayersCommand) { _ in
+                if (fileurl == state.activeurl) {
+                    let exportFilename = String((file.fileURL?.lastPathComponent.split(separator: ".").first)!)
+                    exportLayersController(procreateFile: file.document, exportFilename: exportFilename, exportFlattened: true, fileurl: fileurl).presentDialog(nil)
+                }
             }
             .onReceive(copyCommand) { _ in
                 if (fileurl == state.activeurl) {
@@ -193,7 +181,7 @@ struct DocumentScene: Scene {
                     writeImageToPasteboard(img: file.document.procreate_doc?.composite_image)
                 }
             }
-//            .modifier(WindowObservationModifier())
+            .modifier(file.document.windowObservationMod!)
             .onReceive(zoomInCommand) {
                 // some kind of check to see if fileurl is associated with the current active window
                 if (fileurl == state.activeurl) {
@@ -223,10 +211,15 @@ struct DocumentScene: Scene {
                 }
             })
             CommandGroup(replacing: CommandGroupPlacement.saveItem) {
-                Button("Export") {
+                Button("Export...") {
                     exportCommand.send()
                 }.keyboardShortcut("e")
-                Button("Export PNG Layers") {
+                if (appState.documentType == "3D") {
+                    Button("Export Flattened Textures...") {
+                        exportFlattenedLayersCommand.send()
+                    }.keyboardShortcut("e", modifiers: [.command, .option])
+                }
+                Button("Export Layers...") {
                     exportLayersCommand.send()
                 }.keyboardShortcut("e", modifiers: .option)
                 Divider()
@@ -326,6 +319,11 @@ struct ContentView: View {
                 .onChange(of: isKeyWindow, perform: { value in
                     if (value == true) {
                         state.activeurl = fileurl
+                        if (file.procreate_doc?.featureSet == 2) {
+                            state.documentType = "3D"
+                        } else {
+                            state.documentType = "2D"
+                        }
                     }
                 })
         }
@@ -424,6 +422,15 @@ struct ProcreateView: View {
                     ProgressView(value: silica_doc.comp_load)
                         .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                if (state.exportingLayers[fileurl] == true) {
+                    VStack() {
+                        ProgressView(value: state.exportingLayersProgress[fileurl])
+                            .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                    .background(VisualEffectBlur(material: .popover))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             } else if (viewMode == 2) {
                 ZStack() {
@@ -750,10 +757,10 @@ struct HostingWindowFinder: NSViewRepresentable {
 class WindowObserver: ObservableObject {
     
     @Published
-    public private(set) var isKeyWindow: Bool = false
+    public private(set) var isKeyWindow: Bool? = false
     
-    private var becomeKeyobserver: NSObjectProtocol?
-    private var resignKeyobserver: NSObjectProtocol?
+    private weak var becomeKeyobserver: NSObjectProtocol?
+    private weak var resignKeyobserver: NSObjectProtocol?
 
     weak var window: NSWindow? {
         didSet {
@@ -783,6 +790,13 @@ class WindowObserver: ObservableObject {
             }
         }
     }
+    
+    deinit {
+        print("deinit this biz")
+        isKeyWindow = nil
+        becomeKeyobserver = nil
+        resignKeyobserver = nil
+    }
 }
 
 
@@ -798,8 +812,10 @@ struct WindowObservationModifier: ViewModifier {
             }
         ).environment(
             \.isKeyWindow,
-            windowObserver.isKeyWindow
-        )
+            windowObserver.isKeyWindow!
+        ).onDisappear {
+            print("window disappeared, do something about that window observer here?")
+        }
     }
 }
 

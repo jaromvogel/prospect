@@ -180,10 +180,16 @@ private func decompressAndCompositeImages(_ file: FileWrapper, _ layer: SilicaLa
             DispatchQueue.concurrentPerform(iterations: chunks.count, execute: { index in
                 autoreleasepool {
                     var grayscale: Bool = false
+                    var grayscale_with_alpha: Bool = false
                     if (layer.type == 9) {
+                        // This applies to composite (flattened) versions of roughness and metallic layers in a 3D file
                         grayscale = true
                     }
-                    decompressChunk(file, chunk: chunks[index], grayscale: grayscale)
+                    if (layer.type == 8) {
+                        // This applies to individual roughness and metallic layers in a 3D file
+                        grayscale_with_alpha = true
+                    }
+                    decompressChunk(file, chunk: chunks[index], grayscale: grayscale, grayscale_with_alpha: grayscale_with_alpha)
                     
                     let image = chunks[index].image!
                     let flipped = image.flipVertically()
@@ -245,7 +251,7 @@ private func decompressAndCompositeImages(_ file: FileWrapper, _ layer: SilicaLa
 }
 
 // unarchive the data from the chunk file, but don't do anything else yet
-private func decompressChunk(_ file: FileWrapper, chunk: chunkImage, grayscale: Bool = false) {
+private func decompressChunk(_ file: FileWrapper, chunk: chunkImage, grayscale: Bool = false, grayscale_with_alpha: Bool = false) {
     
     guard let archive = Archive(data: file.regularFileContents!, accessMode: .read) else {
         print("couldn't read procreate archive")
@@ -264,9 +270,9 @@ private func decompressChunk(_ file: FileWrapper, chunk: chunkImage, grayscale: 
             chunk.data?.append(data)
         })
         if (chunk.lz4_compression == false) {
-            readChunkData(chunk, grayscale: grayscale)
+            readChunkData(chunk, grayscale: grayscale, grayscale_with_alpha: grayscale_with_alpha)
         } else {
-            readChunkLZ4Data(chunk, grayscale: grayscale)
+            readChunkLZ4Data(chunk, grayscale: grayscale, grayscale_with_alpha: grayscale_with_alpha)
         }
     } catch {
         NSLog("\(error)")
@@ -274,7 +280,7 @@ private func decompressChunk(_ file: FileWrapper, chunk: chunkImage, grayscale: 
 }
 
 // Use miniLZO to decompress the pixel data from a chunk
-private func readChunkData(_ chunk: chunkImage, grayscale: Bool = false) {
+private func readChunkData(_ chunk: chunkImage, grayscale: Bool = false, grayscale_with_alpha: Bool = false) {
     let src_mutable:UnsafeMutablePointer<UInt8> = UnsafeMutablePointer<UInt8>.allocate(capacity: chunk.data!.count)
     src_mutable.initialize(repeating: 0, count: chunk.data!.count)
     defer {
@@ -306,7 +312,7 @@ private func readChunkData(_ chunk: chunkImage, grayscale: Bool = false) {
     if (r == LZO_E_OK) {
         let dst_pointer = UnsafePointer(dst)
         
-        let chunk_image:NSImage = imageFromPixels(size: chunk.tileSize!, pixels: dst_pointer, width: Int(chunk.tileSize!.width), height: Int(chunk.tileSize!.height), colorSpace: chunk.colorSpace, grayscale: grayscale, data_length: chunk.data!.count)
+        let chunk_image:NSImage = imageFromPixels(size: chunk.tileSize!, pixels: dst_pointer, width: Int(chunk.tileSize!.width), height: Int(chunk.tileSize!.height), colorSpace: chunk.colorSpace, grayscale: grayscale, grayscale_with_alpha: grayscale_with_alpha, data_length: chunk.data!.count)
         
 //        chunk.image = chunk_image.addTextToImage(drawText: "col: \(chunk.column!)\nrow: \(chunk.row!)")
         chunk.image = chunk_image
@@ -317,13 +323,13 @@ private func readChunkData(_ chunk: chunkImage, grayscale: Bool = false) {
     }
 }
 
-private func readChunkLZ4Data(_ chunk: chunkImage, grayscale: Bool = false) {
+private func readChunkLZ4Data(_ chunk: chunkImage, grayscale: Bool = false, grayscale_with_alpha: Bool = false) {
     do {
         let decompData = try (chunk.data! as NSData).decompressed(using: .lz4)
 
         let pixels = decompData.bytes.assumingMemoryBound(to: UInt8.self)
         
-        let chunk_image:NSImage = imageFromPixels(size: chunk.tileSize!, pixels: pixels, width: Int(chunk.tileSize!.width), height: Int(chunk.tileSize!.height), colorSpace: chunk.colorSpace, grayscale: grayscale, data_length: chunk.data!.count)
+        let chunk_image:NSImage = imageFromPixels(size: chunk.tileSize!, pixels: pixels, width: Int(chunk.tileSize!.width), height: Int(chunk.tileSize!.height), colorSpace: chunk.colorSpace, grayscale: grayscale, grayscale_with_alpha: grayscale_with_alpha, data_length: chunk.data!.count)
         
         chunk.image = chunk_image
     } catch {
@@ -333,7 +339,7 @@ private func readChunkLZ4Data(_ chunk: chunkImage, grayscale: Bool = false) {
 
 
 // Create the an actual image from the chunk's pixel data
-private func imageFromPixels(size: NSSize, pixels: UnsafePointer<UInt8>, width: Int, height: Int, colorSpace: String?, grayscale: Bool = false, data_length: Int) -> NSImage {
+private func imageFromPixels(size: NSSize, pixels: UnsafePointer<UInt8>, width: Int, height: Int, colorSpace: String?, grayscale: Bool = false, grayscale_with_alpha: Bool = false, data_length: Int) -> NSImage {
     
     var imageRef: CGImage?
     var bitmapInfo:CGBitmapInfo = [CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue), CGBitmapInfo(rawValue: CGImageByteOrderInfo.orderDefault.rawValue)]
@@ -344,6 +350,11 @@ private func imageFromPixels(size: NSSize, pixels: UnsafePointer<UInt8>, width: 
     if (grayscale == true) {
         bytesPerPixel = 1 //Grayscale uses 1 component
         bitmapInfo = [CGBitmapInfo(rawValue: CGImageAlphaInfo.none.rawValue), CGBitmapInfo(rawValue: CGImageByteOrderInfo.orderDefault.rawValue)]
+        colorspace = CGColorSpaceCreateDeviceGray()
+    }
+    if (grayscale_with_alpha == true) {
+        bytesPerPixel = 2 // Grayscale uses 1 component, alpha uses 1 component
+        bitmapInfo = [CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue), CGBitmapInfo(rawValue: CGImageByteOrderInfo.orderDefault.rawValue)]
         colorspace = CGColorSpaceCreateDeviceGray()
     }
     let bitsPerPixel = bytesPerPixel * bitsPerComponent

@@ -86,7 +86,7 @@ public class exportController {
             label.centerYAnchor.constraint(equalTo: accessoryView.centerYAnchor).isActive = true
             
             if panel.runModal() == NSApplication.ModalResponse.OK, let fileUrl = panel.directoryURL {
-                let filename = panel.nameFieldStringValue
+//                let filename = panel.nameFieldStringValue
                 let exportname = (panel.nameFieldStringValue as NSString).deletingPathExtension
                 let exportURL = fileUrl.appendingPathComponent(exportname).appendingPathExtension("usdz")
                 
