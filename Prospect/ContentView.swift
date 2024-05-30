@@ -49,18 +49,21 @@ public struct ProcreateDocumentType: FileDocument {
     weak var procreate_doc: SilicaDocument?
     var brushset_file: ProcreateBrushset?
     var wrapper: FileWrapper?
-    var windowObservationMod: WindowObservationModifier?
+//    var windowObservationMod: WindowObservationModifier?
     var file_ext: String?
     var image_size: CGSize?
     var brush: SilicaBrush?
     var brush_thumb: NSImage?
     var swatches_image: NSImage?
+//    var window_observer: WindowObserver?
     var brushset_image: NSImage? = nil
 
     public init(configuration: ReadConfiguration) throws {
         // Read the file's contents from file.regularFileContents
         wrapper = configuration.file
-        windowObservationMod = WindowObservationModifier()
+//        window_observer = WindowObserver()
+//        guard let window_observer = window_observer else { return }
+//        windowObservationMod = WindowObservationModifier(windowObserver: window_observer)
         let filename = configuration.file.filename!
         file_ext = URL(fileURLWithPath: filename).pathExtension
         if (file_ext == "procreate") {
@@ -129,8 +132,15 @@ struct DocumentScene: Scene {
                 } else if (file.document.file_ext == "swatches") {
                     file.document.swatches_image = nil
                 }
-                file.document.windowObservationMod = nil
-                print("clean up window observer here somehow")
+//                file.document.windowObservationMod = nil
+//                file.document.window_observer = nil
+//                print("clean up window observer here somehow")
+                appState.exportProgress[fileurl] = nil
+                appState.zoomManager[fileurl] = nil
+                appState.exportingTL[fileurl] = nil
+                appState.exportingLayers[fileurl] = nil
+                appState.exportingLayersProgress[fileurl] = nil
+                // Some way to clean up environment thing here?
             }
             .onReceive(exportCommand) { _ in
                 if (fileurl == state.activeurl) {
@@ -181,7 +191,6 @@ struct DocumentScene: Scene {
                     writeImageToPasteboard(img: file.document.procreate_doc?.composite_image)
                 }
             }
-            .modifier(file.document.windowObservationMod!)
             .onReceive(zoomInCommand) {
                 // some kind of check to see if fileurl is associated with the current active window
                 if (fileurl == state.activeurl) {
@@ -200,6 +209,21 @@ struct DocumentScene: Scene {
             .onReceive(zoomFitCommand) {
                 if (fileurl == state.activeurl) {
                     state.zoomManager[fileurl]! = 1.0
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { notification in
+                if let window = notification.object as? NSWindow {
+                    guard let representedURL = window.representedURL else { return }
+                    if (window.isKeyWindow == true && representedURL.absoluteString == fileurl) {
+                        print("\(window.title) is now the key window \(window.isKeyWindow) with url: \(fileurl)")
+                        state.activeurl = fileurl
+                        if (file.document.procreate_doc?.featureSet == 2) {
+                            state.documentType = "3D"
+                        } else {
+                            state.documentType = "2D"
+                        }
+                        state.objectWillChange.send()
+                    }
                 }
             }
         }
@@ -254,7 +278,6 @@ struct ContentView: View {
     @State var show_meta:Bool = false
     @State var viewMode: Int = 1
     @ObservedObject var state = appState
-    @Environment(\.isKeyWindow) var isKeyWindow: Bool
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -316,44 +339,19 @@ struct ContentView: View {
                         .keyboardShortcut("e", modifiers: .command)
                     })
                 }
-                .onChange(of: isKeyWindow, perform: { value in
-                    if (value == true) {
-                        state.activeurl = fileurl
-                        if (file.procreate_doc?.featureSet == 2) {
-                            state.documentType = "3D"
-                        } else {
-                            state.documentType = "2D"
-                        }
-                    }
-                })
         }
         if (file.file_ext == "brush") {
             BrushView(brush: file.brush!)
                 .background(VisualEffectBlur.init(material: .underWindowBackground))
-                .onChange(of: isKeyWindow, perform: { value in
-                    if (value == true) {
-                        state.activeurl = fileurl
-                    }
-                })
         }
         if (file.file_ext == "swatches") {
             ProspectImageView(fileurl: fileurl, proImage: file.swatches_image!, image_view_size: file.image_size!)
                 .background(VisualEffectBlur.init(material: .underWindowBackground))
 //                .environment(\.colorScheme, .dark)
-                .onChange(of: isKeyWindow, perform: { value in
-                    if (value == true) {
-                        state.activeurl = fileurl
-                    }
-                })
         }
         if (file.file_ext == "brushset") {
             BrushsetView(brushset: file.brushset_file!, file: file)
             .background(VisualEffectBlur.init(material: .underWindowBackground))
-            .onChange(of: isKeyWindow, perform: { value in
-                if (value == true) {
-                    state.activeurl = fileurl
-                }
-            })
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
@@ -736,103 +734,6 @@ struct Procreate3DView: View {
             }
         }
 
-    }
-}
-
-// Hacky way of accessing the NSWindow of a view
-struct HostingWindowFinder: NSViewRepresentable {
-    var callback: (NSWindow?) -> ()
-
-    func makeNSView(context: Self.Context) -> NSView {
-        let view = NSView()
-        DispatchQueue.main.async { [weak view] in
-            self.callback(view?.window)
-        }
-        return view
-    }
-    func updateNSView(_ nsView: NSView, context: Context) {}
-}
-
-
-class WindowObserver: ObservableObject {
-    
-    @Published
-    public private(set) var isKeyWindow: Bool? = false
-    
-    private weak var becomeKeyobserver: NSObjectProtocol?
-    private weak var resignKeyobserver: NSObjectProtocol?
-
-    weak var window: NSWindow? {
-        didSet {
-            self.isKeyWindow = window?.isKeyWindow ?? false
-//            window!.isOpaque = true
-//            window!.backgroundColor = NSColor.init(red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0)
-            guard let window = window else {
-                self.becomeKeyobserver = nil
-                self.resignKeyobserver = nil
-                return
-            }
-            
-            self.becomeKeyobserver = NotificationCenter.default.addObserver(
-                forName: NSWindow.didBecomeKeyNotification,
-                object: window,
-                queue: .main
-            ) { (n) in
-                self.isKeyWindow = true
-            }
-            
-            self.resignKeyobserver = NotificationCenter.default.addObserver(
-                forName: NSWindow.didResignKeyNotification,
-                object: window,
-                queue: .main
-            ) { (n) in
-                self.isKeyWindow = false
-            }
-        }
-    }
-    
-    deinit {
-        print("deinit this biz")
-        isKeyWindow = nil
-        becomeKeyobserver = nil
-        resignKeyobserver = nil
-    }
-}
-
-
-struct WindowObservationModifier: ViewModifier {
-    @StateObject
-    var windowObserver: WindowObserver = WindowObserver()
-    
-    func body(content: Content) -> some View {
-        content.background(
-            HostingWindowFinder { [weak windowObserver] window in
-                windowObserver?.window = window
-                window?.setContentSize(NSSize(width: 0, height: 0)) //Hacky way of forcing the window to the correct width
-            }
-        ).environment(
-            \.isKeyWindow,
-            windowObserver.isKeyWindow!
-        ).onDisappear {
-            print("window disappeared, do something about that window observer here?")
-        }
-    }
-}
-
-
-extension EnvironmentValues {
-    struct IsKeyWindowKey: EnvironmentKey {
-        static var defaultValue: Bool = false
-        typealias Value = Bool
-    }
-    
-    fileprivate(set) var isKeyWindow: Bool {
-        get {
-            self[IsKeyWindowKey.self]
-        }
-        set {
-            self[IsKeyWindowKey.self] = newValue
-        }
     }
 }
 
