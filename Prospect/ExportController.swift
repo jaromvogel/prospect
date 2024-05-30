@@ -8,6 +8,8 @@
 import Foundation
 import Cocoa
 import AVFoundation
+import SceneKit
+import UniformTypeIdentifiers
 
 public class exportController {
     var exportImage: NSImage?
@@ -15,22 +17,82 @@ public class exportController {
     var fileurl: String?
     var isTimelapse: Bool?
     var TLPlayer: AVPlayer?
+    var view: SCNView?
     
-    init(exportImage: NSImage?, isTimelapse: Bool = false, TLPlayer: AVPlayer? = nil, filename: String, fileurl: String? = nil) {
+    init(exportImage: NSImage?, isTimelapse: Bool = false, TLPlayer: AVPlayer? = nil, filename: String, fileurl: String? = nil, view: SCNView? = nil) {
         self.exportImage = exportImage
         self.filename = filename
         self.fileurl = fileurl
         self.isTimelapse = isTimelapse
         self.TLPlayer = TLPlayer
+        self.view = view
     }
 
     var formats:Array<String>?
     var selectedFormat:NSBitmapImageRep.FileType?
     var selectedVideoFormat:AVFileType?
+    var selected3DFormat:UTType?
     let panel:NSSavePanel = NSSavePanel()
 
     @objc func presentDialog(_ sender: Any?) {
-        if (exportImage != nil) {
+        if (view != nil) {
+            // Set up 3D export stuff here
+            formats = ["usdz"]
+            selected3DFormat = .usdz
+            panel.nameFieldLabel = "Save 3D File as:"
+            // Check for '/' character in filename and handle it
+            filename = filename?.replacingOccurrences(of: "/", with: ":")
+            panel.nameFieldStringValue = "\(filename ?? "untitled_artwork")"
+            panel.isExtensionHidden = false
+            panel.canCreateDirectories = true
+            
+            panel.message = "Choose your directory"
+            panel.prompt = "Choose"
+            panel.allowedContentTypes = [.usdz]
+            panel.setFrame(NSRect(x: 0, y: 0, width: 800, height: 500), display: true)
+            
+            // Add file format selector:
+            let popupButton = NSPopUpButton(
+                frame: NSRect(x: 0, y: 0, width: 300, height: 40),
+                pullsDown: false)
+            popupButton.removeAllItems()
+            popupButton.addItems(withTitles: formats!)
+            popupButton.selectItem(at: 0)
+            popupButton.action = #selector(changeFileFormat(_:))
+            popupButton.target = self
+
+            let label = NSTextField()
+            label.stringValue = "File Format:"
+            label.isEditable = false
+            label.isSelectable = false
+            label.drawsBackground = false
+            label.isBezeled = false
+            
+            let accessoryView = NSView()
+            accessoryView.translatesAutoresizingMaskIntoConstraints = false
+            accessoryView.heightAnchor.constraint(equalToConstant: 40.0).isActive = true
+            accessoryView.widthAnchor.constraint(greaterThanOrEqualToConstant: panel.frame.width - 200).isActive = true
+            panel.accessoryView = accessoryView
+            
+            accessoryView.addSubview(popupButton)
+            popupButton.translatesAutoresizingMaskIntoConstraints = false
+            popupButton.trailingAnchor.constraint(equalTo: accessoryView.trailingAnchor, constant: -10.0).isActive = true
+            popupButton.centerYAnchor.constraint(equalTo: accessoryView.centerYAnchor).isActive = true
+            popupButton.widthAnchor.constraint(equalToConstant: 200).isActive = true
+            
+            accessoryView.addSubview(label)
+            label.translatesAutoresizingMaskIntoConstraints = false
+            label.trailingAnchor.constraint(equalTo: popupButton.leadingAnchor, constant: -10.0).isActive = true
+            label.centerYAnchor.constraint(equalTo: accessoryView.centerYAnchor).isActive = true
+            
+            if panel.runModal() == NSApplication.ModalResponse.OK, let fileUrl = panel.directoryURL {
+//                let filename = panel.nameFieldStringValue
+                let exportname = (panel.nameFieldStringValue as NSString).deletingPathExtension
+                let exportURL = fileUrl.appendingPathComponent(exportname).appendingPathExtension("usdz")
+                
+                view?.scene?.write(to: exportURL, options: nil, delegate: nil)
+            }
+        } else if (exportImage != nil) {
             formats = ["png", "jpg", "bmp", "tiff"]
             selectedFormat = .png
             panel.nameFieldLabel = "Save image as:"

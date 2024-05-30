@@ -13,6 +13,7 @@ import UniformTypeIdentifiers
 import AVFoundation
 import AVKit
 import Sparkle
+import SceneKit
 
 
 extension UTType {
@@ -35,26 +36,34 @@ public class AppState: ObservableObject {
     @Published var activeurl: String?
     @Published var exportingTL:Dictionary<String, Bool> = [String: Bool]()
     @Published var exportProgress:Dictionary<String, CGFloat> = [String: CGFloat]()
+    @Published var exportingLayers:Dictionary<String, Bool> = [String: Bool]()
+    @Published var exportingLayersProgress:Dictionary<String, CGFloat> = [String: CGFloat]()
+    @Published var documentType: String?
 }
 
 public let appState = AppState()
 
-struct ProcreateDocumentType: FileDocument {
+public struct ProcreateDocumentType: FileDocument {
 
-    static var readableContentTypes: [UTType] { [.procreateFiles, .brushFiles, .swatchesFiles, .brushSetFiles] }
+    public static var readableContentTypes: [UTType] { [.procreateFiles, .brushFiles, .swatchesFiles, .brushSetFiles] }
     weak var procreate_doc: SilicaDocument?
     var brushset_file: ProcreateBrushset?
     var wrapper: FileWrapper?
+//    var windowObservationMod: WindowObservationModifier?
     var file_ext: String?
     var image_size: CGSize?
     var brush: SilicaBrush?
     var brush_thumb: NSImage?
     var swatches_image: NSImage?
+//    var window_observer: WindowObserver?
     var brushset_image: NSImage? = nil
 
-    init(configuration: ReadConfiguration) throws {
+    public init(configuration: ReadConfiguration) throws {
         // Read the file's contents from file.regularFileContents
         wrapper = configuration.file
+//        window_observer = WindowObserver()
+//        guard let window_observer = window_observer else { return }
+//        windowObservationMod = WindowObservationModifier(windowObserver: window_observer)
         let filename = configuration.file.filename!
         file_ext = URL(fileURLWithPath: filename).pathExtension
         if (file_ext == "procreate") {
@@ -79,7 +88,7 @@ struct ProcreateDocumentType: FileDocument {
         brushset_file?.getBrushsetImage(file: wrapper!, brushLabels: false)
     }
     
-    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+    public func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
         // Create a FileWrapper with the updated contents and set configuration.fileWrapper to it.
         // This is possible because fileWrapper is an inout parameter.
         return configuration.existingFile!
@@ -99,6 +108,7 @@ struct ContentApp: App {
 struct DocumentScene: Scene {
     private let exportCommand = PassthroughSubject<Void, Never>()
     private let exportLayersCommand = PassthroughSubject<Void, Never>()
+    private let exportFlattenedLayersCommand = PassthroughSubject<Void, Never>()
     private let copyCommand = PassthroughSubject<Void, Never>()
     private let zoomInCommand = PassthroughSubject<Void, Never>()
     private let zoomOutCommand = PassthroughSubject<Void, Never>()
@@ -122,14 +132,30 @@ struct DocumentScene: Scene {
                 } else if (file.document.file_ext == "swatches") {
                     file.document.swatches_image = nil
                 }
+//                file.document.windowObservationMod = nil
+//                file.document.window_observer = nil
+//                print("clean up window observer here somehow")
+                appState.exportProgress[fileurl] = nil
+                appState.zoomManager[fileurl] = nil
+                appState.exportingTL[fileurl] = nil
+                appState.exportingLayers[fileurl] = nil
+                appState.exportingLayersProgress[fileurl] = nil
+                // Some way to clean up environment thing here?
             }
             .onReceive(exportCommand) { _ in
                 if (fileurl == state.activeurl) {
                     var exportImage: NSImage?
                     var exportFilename: String?
+                    var view: SCNView?
                     if (file.document.file_ext == "procreate") {
-                        exportImage = file.document.procreate_doc!.composite_image
-                        exportFilename = file.document.procreate_doc!.name!
+                        if (file.document.procreate_doc?.featureSet == 2) {
+                            // Handle 3D export here
+                            view = file.document.procreate_doc?.view
+                            exportFilename = file.document.procreate_doc?.name ?? "Untitled Artwork"
+                        } else {
+                            exportImage = file.document.procreate_doc!.composite_image
+                            exportFilename = file.document.procreate_doc!.name!
+                        }
                     } else if (file.document.file_ext == "brush") {
                         exportImage = file.document.brush_thumb
                         exportFilename = String((file.fileURL?.lastPathComponent.split(separator: ".").first)!)
@@ -137,39 +163,20 @@ struct DocumentScene: Scene {
                         exportImage = file.document.swatches_image
                         exportFilename = String((file.fileURL?.lastPathComponent.split(separator: ".").first)!)
                     }
-                    exportController(exportImage: exportImage, filename: exportFilename ?? "Unknown").presentDialog(nil)
+                    exportController(exportImage: exportImage, filename: exportFilename ?? "Unknown", view: view).presentDialog(nil)
                 }
             }
             .onReceive(exportLayersCommand) { _ in
-                // Using a foreach loop with autoreleasepool instead of concurrentperform is easier on RAM, but quite a bit slower
-                DispatchQueue.concurrentPerform(iterations: file.document.procreate_doc!.layers!.count, execute: { index in
-                    autoreleasepool {
-                        let layer = file.document.procreate_doc!.layers![index]
-                        var layer_img = file.document.procreate_doc!.getLayer(layer, file.document.wrapper!)
-                        if (layer_img != nil) {
-                            // write each layer to disk, then clear it from memory
-                            let fileUrl = FileManager.default.temporaryDirectory.appendingPathComponent("com.jaromvogel.prospect")
-                            do {
-        //                        try? FileManager.default.removeItem(at: fileUrl)
-                                try FileManager.default.createDirectory(at: fileUrl, withIntermediateDirectories: true, attributes: nil)
-                            } catch {
-                                print("couldn't create the directory :(")
-                            }
-                            
-                            let layernumber = file.document.procreate_doc!.layers!.firstIndex(of: layer)
-                            let filename = String(layernumber!).appending("_").appending("_").appending(layer.name!)
-                            if layer_img!.save(as: filename, fileType: .tiff, at: fileUrl) {
-                                // Do something here when saving to disk is done
-                                // Maybe export to PSD somehow??
-                                print("\(String(describing: layer.name!)) saved at \(String(describing: fileUrl))")
-                            }
-
-                        } else {
-                            print("layer not loaded!")
-                        }
-                        layer_img = nil
-                    }
-                })
+                if (fileurl == state.activeurl) {
+                    let exportFilename = String((file.fileURL?.lastPathComponent.split(separator: ".").first)!)
+                    exportLayersController(procreateFile: file.document, exportFilename: exportFilename, exportFlattened: false, fileurl: fileurl).presentDialog(nil)
+                }
+            }
+            .onReceive(exportFlattenedLayersCommand) { _ in
+                if (fileurl == state.activeurl) {
+                    let exportFilename = String((file.fileURL?.lastPathComponent.split(separator: ".").first)!)
+                    exportLayersController(procreateFile: file.document, exportFilename: exportFilename, exportFlattened: true, fileurl: fileurl).presentDialog(nil)
+                }
             }
             .onReceive(copyCommand) { _ in
                 if (fileurl == state.activeurl) {
@@ -184,7 +191,6 @@ struct DocumentScene: Scene {
                     writeImageToPasteboard(img: file.document.procreate_doc?.composite_image)
                 }
             }
-            .modifier(WindowObservationModifier())
             .onReceive(zoomInCommand) {
                 // some kind of check to see if fileurl is associated with the current active window
                 if (fileurl == state.activeurl) {
@@ -205,6 +211,21 @@ struct DocumentScene: Scene {
                     state.zoomManager[fileurl]! = 1.0
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { notification in
+                if let window = notification.object as? NSWindow {
+                    guard let representedURL = window.representedURL else { return }
+                    if (window.isKeyWindow == true && representedURL.absoluteString == fileurl) {
+                        print("\(window.title) is now the key window \(window.isKeyWindow) with url: \(fileurl)")
+                        state.activeurl = fileurl
+                        if (file.document.procreate_doc?.featureSet == 2) {
+                            state.documentType = "3D"
+                        } else {
+                            state.documentType = "2D"
+                        }
+                        state.objectWillChange.send()
+                    }
+                }
+            }
         }
         .windowToolbarStyle(ExpandedWindowToolbarStyle())
         .commands {
@@ -214,12 +235,17 @@ struct DocumentScene: Scene {
                 }
             })
             CommandGroup(replacing: CommandGroupPlacement.saveItem) {
-                Button("Export") {
+                Button("Export...") {
                     exportCommand.send()
                 }.keyboardShortcut("e")
-//                Button("Export PNG Layers") {
-//                    exportLayersCommand.send()
-//                }.keyboardShortcut("e", modifiers: .option)
+                if (appState.documentType == "3D") {
+                    Button("Export Flattened Textures...") {
+                        exportFlattenedLayersCommand.send()
+                    }.keyboardShortcut("e", modifiers: [.command, .option])
+                }
+                Button("Export Layers...") {
+                    exportLayersCommand.send()
+                }.keyboardShortcut("e", modifiers: .option)
                 Divider()
                 Button("Close") {
                     NSApplication.shared.keyWindow?.close()
@@ -252,7 +278,6 @@ struct ContentView: View {
     @State var show_meta:Bool = false
     @State var viewMode: Int = 1
     @ObservedObject var state = appState
-    @Environment(\.isKeyWindow) var isKeyWindow: Bool
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -304,7 +329,7 @@ struct ContentView: View {
                             let exportFilename:String = file.procreate_doc!.name ?? "Untitled Artwork"
                             if (viewMode == 1) {
                                 let exportImage:NSImage = file.procreate_doc!.composite_image!
-                                exportController(exportImage: exportImage, filename: exportFilename).presentDialog(nil)
+                                exportController(exportImage: exportImage, filename: exportFilename, view: file.procreate_doc?.view).presentDialog(nil)
                             } else if (viewMode == 2) {
                                 exportController(exportImage: nil, isTimelapse: true, TLPlayer: file.procreate_doc?.videoPlayer, filename: exportFilename, fileurl: fileurl).presentDialog(nil)
                             }
@@ -314,39 +339,19 @@ struct ContentView: View {
                         .keyboardShortcut("e", modifiers: .command)
                     })
                 }
-                .onChange(of: isKeyWindow, perform: { value in
-                    if (value == true) {
-                        state.activeurl = fileurl
-                    }
-                })
         }
         if (file.file_ext == "brush") {
             BrushView(brush: file.brush!)
                 .background(VisualEffectBlur.init(material: .underWindowBackground))
-                .onChange(of: isKeyWindow, perform: { value in
-                    if (value == true) {
-                        state.activeurl = fileurl
-                    }
-                })
         }
         if (file.file_ext == "swatches") {
             ProspectImageView(fileurl: fileurl, proImage: file.swatches_image!, image_view_size: file.image_size!)
                 .background(VisualEffectBlur.init(material: .underWindowBackground))
 //                .environment(\.colorScheme, .dark)
-                .onChange(of: isKeyWindow, perform: { value in
-                    if (value == true) {
-                        state.activeurl = fileurl
-                    }
-                })
         }
         if (file.file_ext == "brushset") {
             BrushsetView(brushset: file.brushset_file!, file: file)
             .background(VisualEffectBlur.init(material: .underWindowBackground))
-            .onChange(of: isKeyWindow, perform: { value in
-                if (value == true) {
-                    state.activeurl = fileurl
-                }
-            })
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
@@ -400,15 +405,30 @@ struct ProcreateView: View {
         ZStack() {
             if (viewMode == 1) {
                 if (silica_doc.composite_image != nil) {
-                    ProspectImageView(fileurl: fileurl, proImage: silica_doc.composite_image!, image_view_size: image_view_size)
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .onTapGesture {
-                            self.show_meta = false
-                        }
+                    if (file.procreate_doc?.featureSet == nil || file.procreate_doc?.featureSet == 1 || file.procreate_doc?.featureSet == 0) {
+                        ProspectImageView(fileurl: fileurl, proImage: silica_doc.composite_image!, image_view_size: image_view_size)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .onTapGesture {
+                                self.show_meta = false
+                            }
+                    } else if (file.procreate_doc?.featureSet == 2) {
+                        // Show 3D View
+                        Procreate3DView(file: file, fileurl: fileurl, proImage: silica_doc.composite_image!, image_view_size: image_view_size, show_meta: $show_meta)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
                 } else {
                     ProgressView(value: silica_doc.comp_load)
                         .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                if (state.exportingLayers[fileurl] == true) {
+                    VStack() {
+                        ProgressView(value: state.exportingLayersProgress[fileurl])
+                            .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    }
+                    .background(VisualEffectBlur(material: .popover))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             } else if (viewMode == 2) {
                 ZStack() {
@@ -516,6 +536,7 @@ struct InfoCell: View {
         .padding(0)
     }
 }
+
 
 struct BrushView: View {
     @ObservedObject var brush: SilicaBrush
@@ -687,93 +708,32 @@ class ImageViewer: NSScrollView {
 //        }
 }
 
-
-
-// Hacky way of accessing the NSWindow of a view
-struct HostingWindowFinder: NSViewRepresentable {
-    var callback: (NSWindow?) -> ()
-
-    func makeNSView(context: Self.Context) -> NSView {
-        let view = NSView()
-        DispatchQueue.main.async { [weak view] in
-            self.callback(view?.window)
-        }
-        return view
-    }
-    func updateNSView(_ nsView: NSView, context: Context) {}
-}
-
-
-class WindowObserver: ObservableObject {
+struct Procreate3DView: View {
+    var file: ProcreateDocumentType
+    var fileurl: String
+    @State var proImage: NSImage
+    @State var image_view_size: CGSize
+    @State var scene_load_progress: CGFloat = 0
+    @Binding var show_meta: Bool
+    @ObservedObject var state = appState
     
-    @Published
-    public private(set) var isKeyWindow: Bool = false
-    
-    private var becomeKeyobserver: NSObjectProtocol?
-    private var resignKeyobserver: NSObjectProtocol?
-
-    weak var window: NSWindow? {
-        didSet {
-            self.isKeyWindow = window?.isKeyWindow ?? false
-//            window!.isOpaque = true
-//            window!.backgroundColor = NSColor.init(red: 0.0, green: 0.0, blue: 0.0, alpha: 0.0)
-            guard let window = window else {
-                self.becomeKeyobserver = nil
-                self.resignKeyobserver = nil
-                return
-            }
-            
-            self.becomeKeyobserver = NotificationCenter.default.addObserver(
-                forName: NSWindow.didBecomeKeyNotification,
-                object: window,
-                queue: .main
-            ) { (n) in
-                self.isKeyWindow = true
-            }
-            
-            self.resignKeyobserver = NotificationCenter.default.addObserver(
-                forName: NSWindow.didResignKeyNotification,
-                object: window,
-                queue: .main
-            ) { (n) in
-                self.isKeyWindow = false
+    var body: some View {
+        ZStack {
+            SceneKitView(file: file, scene_load_progress: $scene_load_progress, show_meta: $show_meta)
+                .onTapGesture {
+                    print("tapped the thing")
+                }
+            if (scene_load_progress < 1.0) {
+                VStack(spacing: 0, content: {
+                    ProgressView(value: scene_load_progress)
+                        .progressViewStyle(CircularProgressViewStyle(tint: Color.blue))
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                })
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(VisualEffectBlur(material: .popover))
             }
         }
-    }
-}
 
-
-struct WindowObservationModifier: ViewModifier {
-    @StateObject
-    var windowObserver: WindowObserver = WindowObserver()
-    
-    func body(content: Content) -> some View {
-        content.background(
-            HostingWindowFinder { [weak windowObserver] window in
-                windowObserver?.window = window
-                window?.setContentSize(NSSize(width: 0, height: 0)) //Hacky way of forcing the window to the correct width
-            }
-        ).environment(
-            \.isKeyWindow,
-            windowObserver.isKeyWindow
-        )
-    }
-}
-
-
-extension EnvironmentValues {
-    struct IsKeyWindowKey: EnvironmentKey {
-        static var defaultValue: Bool = false
-        typealias Value = Bool
-    }
-    
-    fileprivate(set) var isKeyWindow: Bool {
-        get {
-            self[IsKeyWindowKey.self]
-        }
-        set {
-            self[IsKeyWindowKey.self] = newValue
-        }
     }
 }
 

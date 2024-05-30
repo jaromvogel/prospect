@@ -90,7 +90,11 @@ public class ProcreateBrushset: NSObject, ObservableObject {
 }
 
 @objc(SilicaBrush)
-public class SilicaBrush: NSObject, NSCoding, ObservableObject {
+public class SilicaBrush: NSObject, NSSecureCoding, ObservableObject {
+    public static var supportsSecureCoding: Bool {
+        return true
+    }
+    
     public var name:String?
     public var authorName:String?
     public var thumbnail:NSImage?
@@ -133,8 +137,9 @@ public func getBrushArchive(_ file: FileWrapper, altpath: String? = nil) -> Sili
 // Get the metadata from a Procreate Document
 public func readBrushData(data: Data) -> SilicaBrush? {
     do {
-        if let decoded_data = try NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(data) as? SilicaBrush {
-            return decoded_data
+//        if let decoded_data = try NSKeyedUnarchiver.unarchiveTopLevelObjectWithData(data) as? SilicaBrush {
+        if let decoded_data = try NSKeyedUnarchiver.unarchivedObject(ofClasses: [SilicaBrush.self, NSString.self], from: data) {
+            return decoded_data as? SilicaBrush
         }
     } catch {
         NSLog("Error reading data: \(error)")

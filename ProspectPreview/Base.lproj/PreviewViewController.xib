@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="17701" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="32700.99.1234" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
         <deployment identifier="macosx"/>
-        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="17701"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="22689"/>
+        <plugIn identifier="com.apple.SceneKitIBPlugin" version="22689"/>
         <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
     </dependencies>
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="PreviewViewController" customModule="ProspectPreview" customModuleProvider="target">
             <connections>
+                <outlet property="previewSCNView" destination="pqW-hM-dN7" id="ISj-f0-cva"/>
                 <outlet property="previewScrollChild" destination="GLT-e9-U8x" id="JxR-DY-RFY"/>
                 <outlet property="previewScrollView" destination="ldn-fD-A8M" id="g4A-g4-wFi"/>
                 <outlet property="view" destination="c22-O7-iKe" id="NRM-P4-wb6"/>
@@ -40,12 +42,19 @@
                         <autoresizingMask key="autoresizingMask"/>
                     </scroller>
                 </scrollView>
+                <sceneView translatesAutoresizingMaskIntoConstraints="NO" id="pqW-hM-dN7">
+                    <rect key="frame" x="0.0" y="0.0" width="480" height="480"/>
+                </sceneView>
             </subviews>
             <constraints>
                 <constraint firstItem="ldn-fD-A8M" firstAttribute="top" secondItem="c22-O7-iKe" secondAttribute="top" id="7sL-VS-2Pv"/>
                 <constraint firstItem="ldn-fD-A8M" firstAttribute="leading" secondItem="c22-O7-iKe" secondAttribute="leading" id="AgH-Yt-r1k"/>
+                <constraint firstItem="pqW-hM-dN7" firstAttribute="top" secondItem="c22-O7-iKe" secondAttribute="top" id="EeY-5O-Vm3"/>
                 <constraint firstAttribute="trailing" secondItem="ldn-fD-A8M" secondAttribute="trailing" id="QoG-N3-gUv"/>
+                <constraint firstAttribute="bottom" secondItem="pqW-hM-dN7" secondAttribute="bottom" id="TkF-eY-AGo"/>
                 <constraint firstAttribute="bottom" secondItem="ldn-fD-A8M" secondAttribute="bottom" id="Ysq-yY-SMh"/>
+                <constraint firstAttribute="trailing" secondItem="pqW-hM-dN7" secondAttribute="trailing" id="fDO-hg-Jhe"/>
+                <constraint firstItem="pqW-hM-dN7" firstAttribute="leading" secondItem="c22-O7-iKe" secondAttribute="leading" id="vJu-Tt-3VS"/>
             </constraints>
             <point key="canvasLocation" x="139" y="154"/>
         </customView>

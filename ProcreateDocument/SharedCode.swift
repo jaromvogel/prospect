@@ -8,6 +8,7 @@
 import Foundation
 import Cocoa
 import ZIPFoundation
+import SceneKit
 
 public func getThumbOrientation(thumb_image: NSImage) -> String {
     // Figure out if thumb should be portrait or landscape
@@ -83,6 +84,71 @@ public func getThumbImage(file: FileWrapper, altpath: String? = nil) -> NSImage 
     return thumb_image
 }
 
+
+// Begin 3D Stuff
+public func get3DScene(file: FileWrapper, meshExtension: String?) -> SCNScene {
+    let archive = Archive(data: file.regularFileContents!, accessMode: .read, preferredEncoding: nil)
+       
+    var scene_data:Data = Data()
+    var scene:SCNScene? = nil
+    
+    let path:String = "Mesh/Mesh.".appending(meshExtension ?? "usdz")
+
+    let entry = archive![path]
+    
+    do {
+        // DEBUG MODE
+        // try _ = archive!.extract(entry!, bufferSize: UInt32(100000000), skipCRC32: true, consumer: { (data) in
+        try _ = archive!.extract(entry!, bufferSize: UInt32(100000000), skipCRC32: false, consumer: { (data) in
+            scene_data.append(data)
+        })
+    } catch {
+        NSLog("\(error)")
+    }
+    
+    let fm = FileManager.default
+    let tempmeshfile = fm.temporaryFileURL(ext: ".".appending(meshExtension ?? "usdz"))!
+    fm.createFile(atPath: tempmeshfile.path, contents: scene_data)
+    let src = SCNSceneSource(url: tempmeshfile)
+    if let sceneobj = src?.scene(options: nil)  {
+        scene = sceneobj
+    }
+    try? fm.removeItem(at: tempmeshfile)
+
+    return scene ?? SCNScene()
+}
+
+public func getCachedMeshData(file: FileWrapper, uuid: String?) -> Data {
+    let archive = Archive(data: file.regularFileContents!, accessMode: .read, preferredEncoding: nil)
+    
+    var mesh_data:Data = Data()
+    let path:String = "MeshCache/".appending(uuid!)
+    
+    let entry = archive![path]
+    
+    do {
+        try _ = archive!.extract(entry!, bufferSize: UInt32(100000000), skipCRC32: false, consumer: { (data) in
+            mesh_data.append(data)
+        })
+    } catch {
+        NSLog("\(error)")
+    }
+    
+    return mesh_data
+}
+
+// End 3D stuff
+
+
+
+public extension FileManager {
+
+    func temporaryFileURL(fileName: String = UUID().uuidString,ext: String) -> URL? {
+        
+        return URL(fileURLWithPath: NSTemporaryDirectory(), isDirectory: true)
+            .appendingPathComponent(fileName + ext)
+    }
+}
 
 
 

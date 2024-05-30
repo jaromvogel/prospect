@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 52;
+	objectVersion = 54;
 	objects = {
 
 /* Begin PBXBuildFile section */
@@ -12,6 +12,8 @@
 		7E3E75702550D7D500AC0775 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E3E756F2550D7D500AC0775 /* ContentView.swift */; };
 		7E3E75722550D7D500AC0775 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7E3E75712550D7D500AC0775 /* Assets.xcassets */; };
 		7E3E75752550D7D500AC0775 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 7E3E75742550D7D500AC0775 /* Preview Assets.xcassets */; };
+		7E6A02BB2BF0256F002FFCBF /* SceneKitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E6A02BA2BF0256F002FFCBF /* SceneKitView.swift */; };
+		7E6A02BD2BFE6451002FFCBF /* ExportLayersController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7E6A02BC2BFE6451002FFCBF /* ExportLayersController.swift */; };
 		7E74744A2620C7B200E24CA9 /* AVKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7E7474492620C7B200E24CA9 /* AVKit.framework */; };
 		7E7BD370273B2691001196E6 /* Sparkle in Frameworks */ = {isa = PBXBuildFile; productRef = 7E7BD36F273B2691001196E6 /* Sparkle */; };
 		7E9BD1AE257DAC7E00441917 /* ProcreateDocument.h in Headers */ = {isa = PBXBuildFile; fileRef = 7E9BD1AC257DAC7E00441917 /* ProcreateDocument.h */; settings = {ATTRIBUTES = (Public, ); }; };
@@ -131,6 +133,8 @@
 		7E3E75792550D7D500AC0775 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		7E3E757A2550D7D500AC0775 /* Prospect.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Prospect.entitlements; sourceTree = "<group>"; };
 		7E3E75A72551DB4300AC0775 /* Prospect-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "Prospect-Bridging-Header.h"; sourceTree = "<group>"; };
+		7E6A02BA2BF0256F002FFCBF /* SceneKitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SceneKitView.swift; sourceTree = "<group>"; };
+		7E6A02BC2BFE6451002FFCBF /* ExportLayersController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExportLayersController.swift; sourceTree = "<group>"; };
 		7E7474492620C7B200E24CA9 /* AVKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVKit.framework; path = System/Library/Frameworks/AVKit.framework; sourceTree = SDKROOT; };
 		7E75AEA6257DA3F6007F08DC /* ProcreateFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcreateFile.swift; sourceTree = "<group>"; };
 		7E9BD1AA257DAC7E00441917 /* ProcreateDocument.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = ProcreateDocument.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -228,8 +232,10 @@
 			isa = PBXGroup;
 			children = (
 				7E3E756F2550D7D500AC0775 /* ContentView.swift */,
+				7E6A02BA2BF0256F002FFCBF /* SceneKitView.swift */,
 				7EFC3A72273B56A500364F73 /* AppDelegate.swift */,
 				7EB6601525E884BE00E4BB3D /* ExportController.swift */,
+				7E6A02BC2BFE6451002FFCBF /* ExportLayersController.swift */,
 				8A21FD2925E7085C008F148C /* VisualEffectBlur.swift */,
 				7E3E75712550D7D500AC0775 /* Assets.xcassets */,
 				7E3E75A72551DB4300AC0775 /* Prospect-Bridging-Header.h */,
@@ -491,6 +497,8 @@
 			files = (
 				7EFC3A73273B56A500364F73 /* AppDelegate.swift in Sources */,
 				7E3E75702550D7D500AC0775 /* ContentView.swift in Sources */,
+				7E6A02BD2BFE6451002FFCBF /* ExportLayersController.swift in Sources */,
+				7E6A02BB2BF0256F002FFCBF /* SceneKitView.swift in Sources */,
 				7EE58A412612B81500B616E3 /* SharedCode.swift in Sources */,
 				8A21FD2A25E7085C008F148C /* VisualEffectBlur.swift in Sources */,
 				7EB6601625E884BE00E4BB3D /* ExportController.swift in Sources */,
