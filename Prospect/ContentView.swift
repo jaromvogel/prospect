@@ -39,6 +39,15 @@ public class AppState: ObservableObject {
     @Published var exportingLayers:Dictionary<String, Bool> = [String: Bool]()
     @Published var exportingLayersProgress:Dictionary<String, CGFloat> = [String: CGFloat]()
     @Published var documentType: String?
+    @Published var batchExportQueue: Array<URL>?
+    @Published var batchExportProgress: CGFloat? = 0.0
+    @Published var batchExportState:batchExportStatus = .started
+}
+
+public enum batchExportStatus {
+    case started
+    case active
+    case completed
 }
 
 public let appState = AppState()
@@ -109,6 +118,7 @@ struct DocumentScene: Scene {
     private let exportCommand = PassthroughSubject<Void, Never>()
     private let exportLayersCommand = PassthroughSubject<Void, Never>()
     private let exportFlattenedLayersCommand = PassthroughSubject<Void, Never>()
+    private let batchExportCommand = PassthroughSubject<Void, Never>()
     private let copyCommand = PassthroughSubject<Void, Never>()
     private let zoomInCommand = PassthroughSubject<Void, Never>()
     private let zoomOutCommand = PassthroughSubject<Void, Never>()
@@ -116,6 +126,10 @@ struct DocumentScene: Scene {
     @ObservedObject var state = appState
     
     var body: some Scene {
+//        Settings{
+//            Text("Hello")
+//                .frame(width: 100, height: 100)
+//        }
         DocumentGroup(viewing: ProcreateDocumentType.self) { file in
             let fileurl = file.fileURL!.absoluteString
             ContentView(file: file.$document, fileurl: fileurl)
@@ -215,7 +229,7 @@ struct DocumentScene: Scene {
                 if let window = notification.object as? NSWindow {
                     guard let representedURL = window.representedURL else { return }
                     if (window.isKeyWindow == true && representedURL.absoluteString == fileurl) {
-                        print("\(window.title) is now the key window \(window.isKeyWindow) with url: \(fileurl)")
+//                        print("\(window.title) is now the key window \(window.isKeyWindow) with url: \(fileurl)")
                         state.activeurl = fileurl
                         if (file.document.procreate_doc?.featureSet == 2) {
                             state.documentType = "3D"
@@ -246,6 +260,10 @@ struct DocumentScene: Scene {
                 Button("Export Layers...") {
                     exportLayersCommand.send()
                 }.keyboardShortcut("e", modifiers: .option)
+                Button("Batch Export...") {
+                    appState.batchExportState = .started
+                    batchExportController().presentDialog(nil)
+                }.keyboardShortcut("e", modifiers: [.command, .shift])
                 Divider()
                 Button("Close") {
                     NSApplication.shared.keyWindow?.close()

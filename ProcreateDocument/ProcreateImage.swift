@@ -16,8 +16,8 @@ public extension SilicaDocument {
         if (layer == nil) {
             if ((self.featureSet != nil) && self.featureSet == 2) {
                 // ‼️‼️‼️ Generate thumb image rather than loading composite if this is a 3D file
-                // This is unused now aside from exporting, which I'd like to replace
                 self.composite_image = getThumbImage(file: file, altpath: nil)
+                callback()
             }
         } else {
             var size:CGSize = (layer?.contentsRect!.size)!
