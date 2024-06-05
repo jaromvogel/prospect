@@ -44,6 +44,7 @@
 		7EE58A412612B81500B616E3 /* SharedCode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EE58A372612AE4D00B616E3 /* SharedCode.swift */; };
 		7EFC3A73273B56A500364F73 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7EFC3A72273B56A500364F73 /* AppDelegate.swift */; };
 		8A21FD2A25E7085C008F148C /* VisualEffectBlur.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A21FD2925E7085C008F148C /* VisualEffectBlur.swift */; };
+		8A3A2C362C08F40A0009EA4A /* BatchExportController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A3A2C352C08F40A0009EA4A /* BatchExportController.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -160,6 +161,7 @@
 		7EE58A372612AE4D00B616E3 /* SharedCode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SharedCode.swift; path = ProcreateDocument/SharedCode.swift; sourceTree = "<group>"; };
 		7EFC3A72273B56A500364F73 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		8A21FD2925E7085C008F148C /* VisualEffectBlur.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = VisualEffectBlur.swift; sourceTree = "<group>"; };
+		8A3A2C352C08F40A0009EA4A /* BatchExportController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatchExportController.swift; sourceTree = "<group>"; };
 		8AB14DFB25E06C41009D8027 /* ProcreateShared.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProcreateShared.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -231,6 +233,7 @@
 		7E3E756A2550D7D500AC0775 /* Prospect */ = {
 			isa = PBXGroup;
 			children = (
+				8A3A2C352C08F40A0009EA4A /* BatchExportController.swift */,
 				7E3E756F2550D7D500AC0775 /* ContentView.swift */,
 				7E6A02BA2BF0256F002FFCBF /* SceneKitView.swift */,
 				7EFC3A72273B56A500364F73 /* AppDelegate.swift */,
@@ -501,6 +504,7 @@
 				7E6A02BB2BF0256F002FFCBF /* SceneKitView.swift in Sources */,
 				7EE58A412612B81500B616E3 /* SharedCode.swift in Sources */,
 				8A21FD2A25E7085C008F148C /* VisualEffectBlur.swift in Sources */,
+				8A3A2C362C08F40A0009EA4A /* BatchExportController.swift in Sources */,
 				7EB6601625E884BE00E4BB3D /* ExportController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

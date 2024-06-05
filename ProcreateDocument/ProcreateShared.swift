@@ -12,12 +12,12 @@ import ZIPFoundation
 import AVFoundation
 import SwiftUI
 
-public func readProcreateDocument(file: FileWrapper) -> SilicaDocument {
+public func readProcreateDocument(file: FileWrapper, noVideo: Bool = false) -> SilicaDocument {
     let silica_doc = getArchive(file)
 
     let _ = silica_doc?.getLayer(silica_doc!.composite, file)
     DispatchQueue.global(qos: .userInitiated).async {
-        if (silica_doc?.videoEnabled == true) {
+        if (silica_doc?.videoEnabled == true && noVideo == false) {
             silica_doc?.getVideo(file: file)
         }
     }
