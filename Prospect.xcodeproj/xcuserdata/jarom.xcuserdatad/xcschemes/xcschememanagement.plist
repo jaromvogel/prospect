@@ -28,7 +28,7 @@
 		<key>ProcreateDocument.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
-			<integer>3</integer>
+			<integer>5</integer>
 		</dict>
 		<key>Prospect.xcscheme_^#shared#^_</key>
 		<dict>
@@ -40,10 +40,20 @@
 			<key>orderHint</key>
 			<integer>1</integer>
 		</dict>
+		<key>ProspectPreviewFinder.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>3</integer>
+		</dict>
 		<key>ProspectThumb.xcscheme_^#shared#^_</key>
 		<dict>
 			<key>orderHint</key>
 			<integer>2</integer>
+		</dict>
+		<key>ProspectThumbFinder.xcscheme_^#shared#^_</key>
+		<dict>
+			<key>orderHint</key>
+			<integer>4</integer>
 		</dict>
 	</dict>
 </dict>

@@ -1,12 +1,13 @@
 {
+  "originHash" : "f1b148d66781a4fd5c79adbc97dd06559eaa9338fa197d689e784e6262a7be75",
   "pins" : [
     {
       "identity" : "sparkle",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/sparkle-project/Sparkle",
       "state" : {
-        "revision" : "99dbdcbd96b80bbdf36ff02bf7f9f9cd7ed26f49",
-        "version" : "1.27.0"
+        "revision" : "10d96f2b9b9905b0f529f09e517219d4e20125c0",
+        "version" : "1.27.3"
       }
     },
     {
@@ -14,10 +15,10 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/weichsel/ZIPFoundation.git",
       "state" : {
-        "revision" : "cf10bbff6ac3b873e97b36b9784c79866a051a8e",
-        "version" : "0.9.12"
+        "revision" : "02b6abe5f6eef7e3cbd5f247c5cc24e246efcfe0",
+        "version" : "0.9.19"
       }
     }
   ],
-  "version" : 2
+  "version" : 3
 }

@@ -30,10 +30,14 @@
 		<dict>
 			<key>QLSupportedContentTypes</key>
 			<array>
-				<string>dyn.ah62d4rv4ge81a6xtqr3gn2pyqy</string>
-				<string>dyn.ah62d4rv4ge80e6xzsrya</string>
-				<string>dyn.ah62d4rv4ge80e6xzsryhg3py</string>
-				<string>dyn.ah62d4rv4ge81g75bsvv0u3px</string>
+                <string>si.savage.procreate.document</string>
+                <string>si.savage.procreate.brush</string>
+                <string>si.savage.procreate.swatches</string>
+                <string>si.savage.procreate.brushset</string>
+                <string>dyn.ah62d4rv4ge81a6xtqr3gn2pyqy</string>
+                <string>dyn.ah62d4rv4ge80e6xzsrya</string>
+                <string>dyn.ah62d4rv4ge80e6xzsryhg3py</string>
+                <string>dyn.ah62d4rv4ge81g75bsvv0u3px</string>
 			</array>
 			<key>QLSupportsSearchableItems</key>
 			<true/>
